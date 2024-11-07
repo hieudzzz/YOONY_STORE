@@ -1,0 +1,7 @@
+/* Ghi đè lớp Ant Design để loại bỏ nền */
+:where(.css-dev-only-do-not-override-vryruh).ant-steps {
+    background-color: transparent !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-finish>.ant-steps-item-container>.ant-steps-item-tail::after {
+    background-color: primary;
+}

@@ -1,0 +1,371 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base{
+  *{
+    font-family: "Roboto", sans-serif;
+    font-optical-sizing: auto;
+    box-sizing: border-box;
+  }
+}
+.container-main{
+  @apply w-full max-w-[1200px] mx-auto px-5 
+}
+
+@media (min-width: 1201px) {
+  .container-main {
+    @apply px-0;
+  }
+}
+
+.active {
+  background-color: #ff9900;
+  color: rgb(255, 255, 255);
+}
+
+.active:hover {
+  background-color: #ff9900 !important;
+  color: white !important;
+}
+
+.css-3dzjca-MuiPaper-root-MuiPopover-paper-MuiMenu-paper{
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
+}
+
+a:hover .text-secondary {
+  color: #fff; /* or any other white color code */
+}
+
+a:hover .fill-icon {
+  stroke: #fff;
+}
+#btn-account:hover .fill-icon{
+  stroke: #fff;
+}
+a:hover .fill-icon-check-order {
+  fill: #fff;
+}
+
+a:hover .number-cart{
+  background-color: white;
+  color: #ff9900;
+}
+.swiper-button-prev, .swiper-button-next{
+  height: 30px !important;
+  width: 30px !important;
+  background-color: #ff9900;
+  border-radius: 100%;
+}
+
+
+/* Tùy chỉnh biểu tượng trong nút điều hướng */
+.swiper-button-prev::after, 
+.swiper-button-next::after {
+  font-size: 12px !important;
+  color: #fff;
+}
+
+.swiper-pagination-bullet-active{
+  background-color: #ff9900 !important;
+}
+
+.swiper-button-prev:hover{
+  background-color: #fff !important;
+  transition: 0.5s;
+} 
+.swiper-button-next:hover{
+  background-color: #fff !important;
+  transition: 0.5s;
+}
+
+.swiper-button-next:hover::after{
+  color: #ff9900 !important;
+}
+.swiper-button-prev:hover::after{
+  color: #ff9900 !important;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.slide {
+  animation: slide 3s infinite ease-in-out;
+}
+
+::-webkit-scrollbar{
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-thumb{
+  background-color: #ff9900;
+  border-radius: 20px;
+}
+
+[type='text']:focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus, [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus, [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus{
+  --tw-ring-shadow:none !important;
+}
+
+.product-clothes::before,.product-feature::before,.product-uniform::before{
+  content:"";
+  width: 5px;
+  height: 30px;
+  background-color: rgb(255, 153, 0);
+  display: inline-block;
+  line-height: 30px;
+}
+
+.css-6rg9iv-MuiStack-root{
+  display: block !important;
+}
+.css-9ddj71-MuiInputBase-root-MuiOutlinedInput-root{
+  border-radius: 10px !important;
+}
+.rc-anchor-light.rc-anchor-normal,.rc-anchor-light.rc-anchor-compact {
+  border: 1px solid #f6f6f6 !important;
+}
+.ant-tooltip-content{
+  display: none !important;
+}
+
+:where(.css-dev-only-do-not-override-14i19y2).ant-btn-primary,:where(.css-dev-only-do-not-override-14i19y2).ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover{
+  background-color: #ff9900;
+}
+:where(.css-dev-only-do-not-override-14i19y2).ant-input-outlined:hover,:where(.css-dev-only-do-not-override-14i19y2).ant-input-outlined:focus, :where(.css-dev-only-do-not-override-14i19y2).ant-input-outlined:focus-within{
+  border-color:#ff9900;
+  box-shadow:none
+}
+:where(.css-dev-only-do-not-override-14i19y2).ant-input-affix-wrapper >input.ant-input, :where(.css-dev-only-do-not-override-14i19y2).ant-input-affix-wrapper >textarea.ant-input{
+  font-size: 14px;
+}
+
+.YourHighlightClass {
+  background-color: transparent;
+  font-weight: bold;
+  color:#ff9900
+}
+
+:where(.css-dev-only-do-not-override-14i19y2).ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector{
+  border-color: rgba(255, 153, 0,0.5);
+}
+
+:where(.css-dev-only-do-not-override-14i19y2).ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled){
+  background-color: rgba(255, 153, 0,0.1);
+}
+
+:where(.css-dev-only-do-not-override-14i19y2).ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector{
+  border-color: rgba(255, 153, 0,0.5);
+}
+
+
+.menu-list-product-admin::-webkit-scrollbar,.scrollbar-hide::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+.jodit-container:not(.jodit_inline){
+  border: 1px solid #E6E6EB !important;
+}
+.jodit-add-new-line:after{
+  background-color: transparent !important;
+}
+
+.jodit-add-new-line{
+  display: none !important;
+}
+
+.no-spin::-webkit-inner-spin-button,
+.no-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.custom-upload .anticon-eye{
+  display: none;
+}
+.custom-upload,.custom-upload .ant-upload.ant-upload-select,.custom-upload .ant-upload-list-item {
+  width: 67px !important;;
+  height: 67px !important;;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-input-outlined:focus, :where(.css-dev-only-do-not-override-vryruh).ant-input-outlined:focus-within{
+  border-color: #ff9900 !important;
+  box-shadow: none !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-input-outlined:hover{
+  border-color: #ff9900 !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-solid{
+  background-color: #ff9900 !important;
+}
+.img-zoom div{
+  background-size: cover !important;
+}
+.anticon-star svg{
+  height: 16px !important;
+  width: 16px !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled){
+  color: #ff9900 !important;
+  border-color: #ff9900;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover{
+  color: #ff9900;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):first-child{
+  border-color: #ff9900;
+}
+
+.shadow-small{
+  box-shadow: none !important;
+  border: 1px solid #F2F2F7;
+}
+.ant-checkbox-checked .ant-checkbox-inner{
+  background-color: #ff9900 !important;
+  border-color: white;
+}
+
+
+.ant-checkbox-indeterminate .ant-checkbox-inner:after{
+  background-color: rgb(255, 153, 0) !important;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-table-wrapper .ant-table-tbody .ant-table-row.ant-table-row-selected >.ant-table-cell{
+  background-color: #fffbf0 !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-pagination .ant-pagination-item-active,:where(.css-dev-only-do-not-override-vryruh).ant-pagination .ant-pagination-item-active:hover{
+  border-color: #ff9900;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-pagination .ant-pagination-item-active a,:where(.css-dev-only-do-not-override-vryruh).ant-pagination .ant-pagination-item-active:hover a{
+  color:#ff9900
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-table-wrapper .ant-table-thead >tr>th{
+  background-color: #ff9900;
+  color: white;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-outlined:not(:disabled):not(.ant-btn-disabled):hover, :where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-dashed:not(:disabled):not(.ant-btn-disabled):hover{
+  color:#ff9900;
+  border-color: #ff9900;
+}
+:where(.css-dev-only-do-not-override-vryruh) a:hover{
+  color:#ff9900;
+}
+
+.mini-cart [data-testid="close-drawer"]{
+  top: 40px !important;
+  color: #ff9900;
+}
+
+
+.mini-cart [data-testid="close-drawer"]:hover{
+  color: #ff9900;
+  background: #ffebcc;
+}
+
+.input-role{
+  height: 30px;
+  border-radius: 5px;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-steps.ant-steps-label-vertical .ant-steps-item-content{
+  width: 120px;
+  margin: 0;
+
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-tail{
+  top: 20px;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-title{
+  font-size: 14px;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps.ant-steps-label-vertical .ant-steps-item-tail{
+  margin-inline-start: 60px;
+  padding: 0 25px;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-finish>.ant-steps-item-container>.ant-steps-item-tail::after{
+  background-color:#ff9900
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-steps{
+  background-color: #fff5e5;
+  padding: 15px 0px 10px 0px; 
+  border-radius: 10px;
+}
+
+.box-shaw-voucher-cart{
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 0px 5px;
+}
+
+:where(.css-dev-only-do-not-override-vryruh).ant-modal{
+  top: 25px;
+}
+
+.css-xsl00c-MuiBadge-badge{
+  background-color:rgb(255, 153, 0) !important;
+}
+
+.shadow-btn-wheel {
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+:where(.countdowm-sale).ant-statistic .ant-statistic-content .ant-statistic-content-value{
+  letter-spacing: 1px !important;
+  display: block;
+}
+
+.table-order-users::-webkit-scrollbar{
+  width: 0px;
+  height: 0px;
+}
+
+.table-order-users:hover::-webkit-scrollbar{
+  width: 4px;
+  height: 4px;
+}
+
+
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-finish .ant-steps-item-icon{
+  background-color: rgb(255, 153, 0,0.2);
+  border-color:rgb(255, 153, 0,0.2)
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-process .ant-steps-item-icon{
+  background-color: #ff9900;
+  border-color:#ff9900
+}
+
+:where(.css-dev-only-do-not-override-o98sq).ant-tabs .ant-tabs-tab-btn .ant-tabs-tab-icon:not(:last-child){
+  margin-inline-end:5px !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-finish .ant-steps-item-icon >.ant-steps-icon{
+  color: #ff9900 !important;
+}
+
+._loading_overlay_content{
+  color: #ff9900 !important;
+}
+.rating-done .ant-rate-star{
+  margin-inline-end: 5px !important;
+}
+.rating-done .anticon-star svg{
+  height: 12px !important;
+  width: 12px !important;
+}
+
+.rating-scroll-done::-webkit-scrollbar-thumb{
+  background-color: #FAFAFA;
+}
+
+.ant-steps-item-description{
+  font-size: 12px !important;
+}
