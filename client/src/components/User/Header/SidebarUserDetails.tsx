@@ -1,19 +1,31 @@
-
 import { Avatar } from "@mui/material";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 const SidebarUserDetails = () => {
-  const userInfor = JSON.parse(localStorage.getItem("userInfor")!);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userInfor");
+    if (storedUser) setUser(JSON.parse(storedUser));
+    const handleAuthChange = () => {
+      const updatedUser = localStorage.getItem("userInfor");
+      setUser(updatedUser ? JSON.parse(updatedUser) : null);
+    };
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => {
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
+  }, []);
   return (
-    <div className="col-span-2 min-h-screen bg-util border border-[#f1f1f1] rounded-md">
+    <div className="col-span-3 lg:col-span-2 min-h-screen bg-util border border-[#f1f1f1] rounded-md">
       <div className="flex items-center p-4 border-b border-[#f1f1f1]">
         <Avatar
-              alt={String(userInfor?.name).toUpperCase()}
-              src={userInfor?.avatar || "/default-avatar.png"}
-              sx={{ width: 50, height: 50 }}
-            />
+          alt={String(user?.name).toUpperCase()}
+          src={user?.avatar || "/default-avatar.png"}
+          sx={{ width: 50, height: 50 }}
+        />
         <div className="ml-3">
-          <h4 className="font-medium line-clamp-2">{userInfor?.name}</h4>
+          <h4 className="font-medium line-clamp-2">{user?.name}</h4>
           <p className="text-sm text-primary italic">( Member )</p>
         </div>
       </div>
@@ -118,7 +130,7 @@ const SidebarUserDetails = () => {
           </li>
           <li className="mb-2">
             <NavLink
-              to="address"
+              to="addresses"
               className={`flex items-center px-3 py-2.5 cursor-pointer border m-4 rounded-sm hover:bg-[#fafafe] hover:text-hover transition-all border-[#f1f1f1] 
               }`}
             >
@@ -146,29 +158,32 @@ const SidebarUserDetails = () => {
           </li>
           <li className="mb-2">
             <NavLink
-              to="setting"
+              to="thong-bao"
               className={`flex items-center px-3 py-2.5 cursor-pointer border m-4 rounded-sm hover:bg-[#fafafe] hover:text-hover transition-all border-[#f1f1f1]`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
                 className="size-6 mr-2"
+                color={"currentColor"}
+                fill={"none"}
               >
                 <path
+                  d="M2.52992 14.7696C2.31727 16.1636 3.268 17.1312 4.43205 17.6134C8.89481 19.4622 15.1052 19.4622 19.5679 17.6134C20.732 17.1312 21.6827 16.1636 21.4701 14.7696C21.3394 13.9129 20.6932 13.1995 20.2144 12.5029C19.5873 11.5793 19.525 10.5718 19.5249 9.5C19.5249 5.35786 16.1559 2 12 2C7.84413 2 4.47513 5.35786 4.47513 9.5C4.47503 10.5718 4.41272 11.5793 3.78561 12.5029C3.30684 13.1995 2.66061 13.9129 2.52992 14.7696Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28a1.125 1.125 0 0 1-1.11.941H10.704a1.125 1.125 0 0 1-1.11-.94l-.214-1.282a1.125 1.125 0 0 0-.645-.87 6.467 6.467 0 0 1-.22-.127 1.125 1.125 0 0 0-1.076-.125l-1.217.456a1.125 1.125 0 0 1-1.37-.49L3.856 15.58a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.293-.24.438-.613.43-.991a7.616 7.616 0 0 1 0-.255c.009-.379-.137-.75-.43-.991l-1.003-.827a1.125 1.125 0 0 1-.26-1.431l1.296-2.247a1.125 1.125 0 0 1 1.37-.491l1.217.456c.355.133.75.072 1.076-.124a6.504 6.504 0 0 1 .22-.127c.331-.183.582-.495.645-.87l.213-1.28Z"
                 />
                 <path
+                  d="M8 19C8.45849 20.7252 10.0755 22 12 22C13.9245 22 15.5415 20.7252 16 19"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 />
               </svg>
-              <span>Cài đặt</span>
+              <span>Thông báo</span>
             </NavLink>
           </li>
         </ul>

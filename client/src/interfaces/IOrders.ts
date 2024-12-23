@@ -15,9 +15,11 @@ export interface Orders {
     created_at: string;
     updated_at: string;
     items: ItemProduct[];
+    profit:number;
     product: OrderProduct[];
     user: User;
-    coupons:Coupons[]
+    coupons:Coupons[];
+    is_delivered:[]
 }
 export interface ItemProduct {
     id?: number;
@@ -85,6 +87,7 @@ export interface User {
     avatar: string;
     create_at: string;
     email: string;
+    name:string;
     email_verified_at: string;
     id: number;
     provider: string;
@@ -104,7 +107,7 @@ export interface Coupons {
 
 
 }
-interface Coupon {
+export interface Coupon {
     id: number;
     code: string;
     name: string;
@@ -124,3 +127,11 @@ interface Coupon {
 }
 
 
+export interface UserOrder {
+    id?:number;
+    address:string;
+    avatar:string;
+    created_at:string;
+    email:string;
+    name:string
+}

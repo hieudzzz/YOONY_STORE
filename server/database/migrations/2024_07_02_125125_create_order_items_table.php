@@ -18,6 +18,11 @@ return new class extends Migration
             $table->integer('quantity');
             $table->integer('unit_price');
             $table->integer('total_price');
+            $table->string('product_name');
+            $table->string('product_image');
+            $table->json('order_item_attribute');
+            $table->decimal('unit_cost', 10, 2);
+            $table->decimal('profit', 10, 2);
             $table->timestamps();
         });
     }

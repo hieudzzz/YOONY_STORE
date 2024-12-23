@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AttributeValue\StoreAttributeValueRequest;
+use App\Http\Requests\AttributeValue\UpdateAttributeValueRequest;
 use App\Models\AttributeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,13 +60,11 @@ class AttributeValueController extends Controller
             ], 500);
         }
     }
-    public function store(Request $request)
+    public function store(StoreAttributeValueRequest $value)
     {
         try {
-            $data = $request->validate([
-                'value' => 'required',
-                'attribute_id' => 'required'
-            ]);
+          
+            $data =$value->all();
     
             // Tạo bản ghi mới
             $attributeValue = AttributeValue::create($data);
@@ -90,22 +90,14 @@ class AttributeValueController extends Controller
         }
     }
     
-    public function update(Request $request, AttributeValue $attributeValue)
+    public function update(UpdateAttributeValueRequest $request, $attributeValue)
     {
         try {
-            $idExits = AttributeValue::query()->where('id', $attributeValue->id)->exists();
-            if(!$idExits){
-                return response()->json([
-                    'status' => 'error',
-                    'messages' =>  'Không tìm thấy'
-                ], Response::HTTP_NOT_FOUND);
-            }
-            $model = AttributeValue::query()->findOrFail($attributeValue->id);
-
-
+            
             $data = $request->all();
-
+            $model = AttributeValue::query()->findOrFail($attributeValue);
             $model->update($data);
+
 
             return response()->json([
                 'data' => $model,
@@ -124,19 +116,16 @@ class AttributeValueController extends Controller
         }
     }
 
-    public function destroy(AttributeValue $attributeValue)
+    public function destroy($id)
     {
         try {
-
-
-            $idExits = AttributeValue::where('id', $attributeValue->id)->exists();
-            if(!$idExits){
+            $model = AttributeValue::query()->findOrFail($id);
+            if(!$model){
                 return response()->json([
                     'status' => 'error',
                     'messages' =>  'Vui lòng thử lại'
                 ], Response::HTTP_NOT_FOUND);
             }
-            $model = AttributeValue::query()->findOrFail($attributeValue->id);
 
             $model->delete();
 

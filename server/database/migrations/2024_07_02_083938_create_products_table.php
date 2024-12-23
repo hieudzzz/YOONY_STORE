@@ -19,7 +19,6 @@ return new class extends Migration
             $table->longText('description')->nullable();
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->boolean('is_featured')->default(false);
-            $table->boolean('is_good_deal')->default(false);
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();

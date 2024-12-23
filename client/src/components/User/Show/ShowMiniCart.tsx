@@ -1,9 +1,9 @@
-import { useContext } from "react";
+import { useContext} from "react";
 import CartContext from "../../../contexts/CartContext";
 import { Link } from "react-router-dom";
 import { IAttributeValue } from "../../../interfaces/IAttributeValue";
 const ShowMiniCart = () => {
-  const { carts } = useContext(CartContext);
+  const { carts, dispatch } = useContext(CartContext);
   return (
     <div>
       {carts.length === 0 ? (
@@ -29,42 +29,51 @@ const ShowMiniCart = () => {
       ) : (
         <div className="flex flex-col gap-2">
           {carts.slice(0, 5).map((cart) => {
-            const price = cart.variant.sale_price
-              ? cart.variant.sale_price * cart.quantity
-              : cart.variant.price * cart.quantity;
+            const price = cart.variant?.sale_price
+              ? cart.variant?.sale_price * cart?.quantity
+              : cart.variant?.price * cart?.quantity;
             return (
               <div
                 key={cart.id}
                 className="flex gap-2 shadow-sm p-2 rounded-md justify-between"
               >
-                <img
-                  src={cart.variant.image || cart.variant.product.images[0]}
-                  className="max-w-10 w-full h-10 object-cover rounded-md"
-                />
-                <div>
-                  <Link
-                    to={`/${cart.variant.product.category?.slug}/${cart.variant.product.slug}`}
-                  >
-                    <p className="line-clamp-1 text-sm">
-                      {cart.variant.product.name}
-                    </p>
-                  </Link>
-                  <div className="flex gap-2">
-                    <span className="text-xs">
-                      Size: {""}
-                      {cart.variant.attribute_values.find(
-                        (item: IAttributeValue) =>
-                          item.attribute?.slug === "size"
-                      )?.value || "N/A"}
-                    </span>
-                    <span className="text-xs">
-                      Màu: {""}
-                      {cart.variant.attribute_values.find(
-                        (item: IAttributeValue) =>
-                          item.attribute?.slug === "color"
-                      )?.value || "N/A"}
-                    </span>
-                    <span className="text-xs">SL: {cart.quantity}</span>
+                <div className="flex gap-2">
+                  <img
+                    src={
+                      cart.variant?.image || cart.variant?.product?.images[0]
+                    }
+                    className="max-w-10 w-full h-10 object-cover rounded-md"
+                  />
+                  <div className="max-w-[250px] w-full">
+                    <Link
+                      to={`/${cart.variant?.product?.category?.slug}/${cart.variant?.product?.slug}`}
+                    >
+                      <p className="text-sm text-ellipsis text-nowrap overflow-hidden">
+                        {cart.variant?.product?.name}
+                      </p>
+                    </Link>
+                    <div className="flex gap-2 text-secondary/50 items-center">
+                      {cart.variant?.attribute_values.map(
+                        (attribute_value: IAttributeValue, index) => {
+                          return (
+                            <>
+                              <div className="text-[13px]">
+                                <span>{attribute_value?.attribute?.name}</span>
+                                {": "}
+                                <span>{attribute_value?.value}</span>
+                              </div>
+                              {index <
+                                cart.variant?.attribute_values.length - 1 && (
+                                <span className="text-[13px]">|</span>
+                              )}
+                            </>
+                          );
+                        }
+                      )}
+                      <span className="text-xs text-primary">
+                        SL: {cart?.quantity}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -75,6 +84,7 @@ const ShowMiniCart = () => {
                         maximumFractionDigits: 0,
                       })
                       .replace(/,/g, ".")}
+                    đ
                   </span>
                 </div>
               </div>
@@ -83,11 +93,18 @@ const ShowMiniCart = () => {
           <div className="flex justify-between items-center mt-5 mb-2">
             <div>
               <span className="text-sm text-primary/75">
-                {carts.length>5 ? `${carts.length - 5} Thêm Hàng Vào Giỏ` : '' } 
+                {carts.length > 5
+                  ? `${carts.length - 5} Thêm Hàng Vào Giỏ`
+                  : ""}
               </span>
             </div>
             <button>
-              <Link to={"/gio-hang"} className="py-2 px-4 bg-primary hover:text-util text-util rounded-sm">Xem giỏ hàng</Link>
+              <Link
+                to={"/gio-hang"}
+                className="py-2 px-4 bg-primary hover:text-util text-util rounded-sm"
+              >
+                Xem giỏ hàng
+              </Link>
             </button>
           </div>
         </div>

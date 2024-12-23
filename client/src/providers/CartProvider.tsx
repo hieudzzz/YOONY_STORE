@@ -14,26 +14,36 @@ const CartProvider = ({ children }: Props) => {
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
 
   useEffect(() => {
-    const fetchCarts = async () => {
-      if (isLoggedIn) {
-        try {
-          const { data: { data: response } } = await instance.get('cart');
+    if (!isLoggedIn) {
+      const existingCart = JSON.parse(localStorage.getItem("cartLocal")!) || [];
+      dispatch({
+        type: "LIST",
+        payload: existingCart,
+      });
+    } else {
+      const fetchCarts = async () => {
+        if (isLoggedIn) {
+          try {
+            const {
+              data: { data: response },
+            } = await instance.get("cart");
+            dispatch({
+              type: "LIST",
+              payload: response,
+            });
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
           dispatch({
             type: "LIST",
-            payload: response
+            payload: [],
           });
-        } catch (error) {
-          console.log(error);
         }
-      } else {
-        dispatch({
-          type: "LIST",
-          payload: []
-        });
-      }
-    };
+      };
 
-    fetchCarts();
+      fetchCarts();
+    }
   }, [isLoggedIn]);
 
   useEffect(() => {
@@ -43,15 +53,15 @@ const CartProvider = ({ children }: Props) => {
 
     checkAuthStatus();
 
-    window.addEventListener('storage', checkAuthStatus);
-    
-    const cookieCheckInterval = setInterval(checkAuthStatus, 500); 
+    window.addEventListener("storage", checkAuthStatus);
+
+    const cookieCheckInterval = setInterval(checkAuthStatus, 500);
 
     return () => {
-      window.removeEventListener('storage', checkAuthStatus);
+      window.removeEventListener("storage", checkAuthStatus);
       clearInterval(cookieCheckInterval);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   return (
     <CartContext.Provider value={{ carts, dispatch }}>

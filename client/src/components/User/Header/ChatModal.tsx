@@ -4,9 +4,7 @@ import { Modal, Input, Button } from "antd";
 const ChatModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
     const [messages, setMessages] = useState<{ text: string; isSender: boolean }[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
-    const messagesEndRef = useRef<HTMLDivElement | null>(null); // Tạo ref để cuộn xuống
-
-    // Danh sách câu hỏi mẫu
+    const messagesEndRef = useRef<HTMLDivElement | null>(null); 
     const sampleQuestions = [
         "Bạn cần hỗ trợ về vấn đề gì?",
         "Có điều gì tôi có thể giúp bạn hôm nay?",
@@ -16,17 +14,15 @@ const ChatModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visibl
     ];
     useEffect(() => {
         if (visible) {
-            // Thêm câu hỏi mẫu vào danh sách tin nhắn khi mở modal
             const initialMessages = sampleQuestions.map((question) => ({
                 text: question,
-                isSender: false, // Câu hỏi là từ người hỗ trợ
+                isSender: false, 
             }));
             setMessages(initialMessages);
         }
     }, [visible]);
 
     useEffect(() => {
-        // Cuộn xuống dưới mỗi khi danh sách tin nhắn thay đổi
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
@@ -38,7 +34,7 @@ const ChatModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visibl
                 ...prevMessages,
                 { text: inputValue.trim(), isSender: true },
             ]);
-            setInputValue(""); // Xóa ô nhập sau khi gửi
+            setInputValue("");
         }
     };
 

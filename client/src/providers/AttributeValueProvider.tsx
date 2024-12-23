@@ -13,7 +13,6 @@ const AttributeValueProvider = (props: Props) => {
     (async () => {
       try {
         const { data: { data: { data: response } } } = await instance.get('attribute-value')
-        console.log(response)
         dispatch({
           type:"LIST",
           payload:response

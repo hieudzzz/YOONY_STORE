@@ -7,7 +7,7 @@ const userReducer = (state:any,action:any) => {
         return action.payload
     case "UPDATE":
         return state.map((item:IUser)=>{
-            if (item._id !==action.payload._id) {
+            if (item.id !==action.payload.id) {
                 return item
             }
             return action.payload

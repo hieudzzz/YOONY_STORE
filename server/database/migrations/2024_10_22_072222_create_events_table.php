@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Tên sự kiện
-            $table->string('description')->nullable(); // Mô tả sự kiện
-            $table->date('start_date'); // Ngày bắt đầu
-            $table->date('end_date'); // Ngày kết thúc
+            $table->string('name'); 
+            $table->string('description')->nullable();
+            $table->date('start_date');
+            $table->date('end_date');
             $table->boolean('is_active')->default(false);
             $table->timestamps();
         });

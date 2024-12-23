@@ -15,15 +15,15 @@ const ProbabilityWheel = ({ coupons }) => {
   );
 
   // Định nghĩa 2 màu cố định
-  const colors = ["#FF8C00", "#FEEFD8"]; // cam và trắng
+  const colors = ["#FF8C00", "#FEEFD8","#FFFFFF"]; 
 
   // Chuyển đổi coupons thành format phù hợp cho Wheel với 2 màu xen kẽ
   const data = useMemo(() => {
     return coupons.map((coupon, index) => ({
       option: coupon.name,
       style: {
-        backgroundColor: colors[index % 2],
-        textColor: index % 2 === 0 ? "#FEEFD8" : "#FF8C00", // Text màu trắng trên nền cam, text màu cam trên nền trắng
+        backgroundColor: colors[index % 3],
+        textColor: index % 3 === 0 ? "#FEEFD8" : "#FF8C00"
       },
       optionSize: 20,
       description: coupon.description,
@@ -90,7 +90,7 @@ const ProbabilityWheel = ({ coupons }) => {
           data={data}
           onStopSpinning={handleStopSpinning}
           backgroundColors={colors}
-          textColors={["#FEEFD8", "#FF8C00"]}
+          textColors={["#FEEFD8", "#FF8C00","#FFFFFF"]}
           outerBorderColor="#ff9900"
           outerBorderWidth={20}
           innerBorderColor="#FEEFD8"

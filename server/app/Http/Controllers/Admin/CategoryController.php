@@ -15,8 +15,9 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $category = Category::orderByDesc('id')->paginate(10); //10 cate trên
-
+        $category = Category::withCount('product') 
+            ->orderByDesc('id')
+            ->paginate(10); 
         return CategoryResource::collection($category)->additional(['message' => 'Toàn Bộ Danh Mục']);
     }
 
@@ -69,6 +70,10 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
+        if ($category->product()->exists()) {
+            return response()->json(['message' => 'Không thể xóa danh mục vì vẫn còn sản phẩm!'], 400);
+        }
+
         $category->delete();
         return response()->json(['message' => 'Xóa danh mục thành công!'], 200);
     }
@@ -78,9 +83,16 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
+        // Cập nhật trạng thái của danh mục
         $category->update([
             'is_active' => $request->is_active,
         ]);
+
+        //nếu tắt is_active của danh mục thì mất cả sản phẩm thuộc danh mục đó
+        $category->product()->update([
+            'is_active' => $request->is_active,
+        ]);
+
         return response()->json([
             'message' => 'Cập nhật trạng thái hoạt động thành công!',
             'data' => new CategoryResource($category),
@@ -120,12 +132,38 @@ class CategoryController extends Controller
     public function hardDelete(string $id)
     {
         $category = Category::withTrashed()->findOrFail($id);
-
+        if ($category->product()->exists()) {
+            return response()->json(['message' => 'Không thể xóa danh mục vì vẫn còn sản phẩm!'], 400);
+        }
         $category->forceDelete();
 
         return response()->json(['message' => 'Xóa vĩnh viễn danh mục thành công!'], 200);
     }
 
+    public function countProducts($id)
+    {
+        try {
+            $category = Category::findOrFail($id);
+
+            $productCount = $category->product()->count();
+
+            return response()->json([
+                'category_id' => $id,
+                'category_name' => $category->name,
+                'product_count' => $productCount
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Danh mục không tồn tại!'
+            ], 404);
+        } catch (\Exception $e) {
+            // Xử lý lỗi chung
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi trong quá trình xử lý!',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 }
 

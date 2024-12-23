@@ -26,34 +26,35 @@ class UpdateCouponRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|max:255|unique:coupons,code,' . $this->route('coupon'), 
+            'code' => 'required|max:255|unique:coupons,code,' . $this->route('coupon'),
+            'name' => 'required|max:255|unique:coupons,name,' . $this->route('coupon'),
             'discount' => 'required',
             'discount_type' => 'required',
             'usage_limit' => 'required',
-            'start_date' => 'required|date|date_format:Y-m-d',
-            'end_date' => 'required|date|date_format:Y-m-d|after_or_equal:start_date',
+            'start_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:today',
+            'end_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:start_date',
             'status' => 'boolean',
             'is_featured' => 'boolean',
-            'min_order_value' => 'required|min:0|numeric',
-            'max_order_value'   => 'required|numeric|gt:min_order_value'
+            'min_order_value' => 'nullable|min:0|numeric',
+            'max_order_value' => 'nullable|numeric|min:0|gte:min_order_value',
+            'max_discount'   => 'nullable|numeric|min:0'
         ];
     }
 
     public function messages(): array
     {
         return [
-            'code.required' => 'Yêu cầu nhập', 
-            'code.max' => 'Không nhập quá 255 ký tự', 
-            'code.unique' => 'Mã này đã tồn tại', 
+            'code.required' => 'Yêu cầu nhập',
+            'name.unique' => 'Tên mã giảm giá đã tồn tại',
+            'code.max' => 'Không nhập quá 255 ký tự',
+            'code.unique' => 'Mã này đã tồn tại',
             'discount.required' => 'Yêu cầu nhập',
             'discount_type.required' => 'Yêu cầu nhập',
             'usage_limit.required' => 'Yêu cầu nhập',
-            'min_order_value.required' => 'Yêu cầu nhập',
             'min_order_value.min' => 'Giá trị phải là số ',
             'min_order_value.numeric' => 'Vui lòng nhập số',
-            'max_order_value.required' => 'Yêu cầu nhập',
-            'max_order_value.numeric' => 'Vui lòng nhập số',
-            'max_order_value.gt:min_order_value' => 'Giá trị phải lớn hơn giá trị đơn hàng thấp nhất',
+            'max_discount.numeric' => 'Vui lòng nhập số',
+            'max_discount.gt:min' => 'Giá trị phải là số',
             'status.in' => 'Trạng thái đã chọn không hợp lệ',
             'is_featured.in' => 'Trạng thái đã chọn không hợp lệ',
             'end_date.date' => 'Ngày kết thúc phải là một ngày hợp lệ.',
@@ -61,6 +62,11 @@ class UpdateCouponRequest extends FormRequest
             'end_date.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
             'start_date.date' => 'Ngày bắt đầu phải là một ngày hợp lệ.',
             'start_date.date_format' => 'Ngày bắt đầu phải có định dạng YYYY-MM-DD.',
+            'start_date.after_or_equal' => 'Ngày bắt đầu phải từ hôm nay trở đi.',
+            'max_order_value.min' => 'Vui lòng nhập giá trị lớn hơn 0',
+            'max_order_value.gte' => 'Giá trị đơn hàng tối đa phải lớn hơn hoặc bằng giá trị đơn hàng tối thiểu.',
+            'max_order_value.numeric' => 'Vui lòng nhập số',
+
         ];
     }
 

@@ -109,5 +109,46 @@ public function destroy($id)
         return response()->json(['message' => 'Xóa banner thất bại', 'error' => $e->getMessage()], 500);
     }
 }
+// public function createBannerMultiple(StoreBannerRequest $request)
+// {
+//     try {
+//         $banner = Banner::create([
+//             'image' => json_encode($request->images),
+//             'is_active' => $request->is_active ?? true,
+//         ]);
+
+//         return response()->json([
+//             'message' => 'Banner đã được thêm thành công!',
+//             'banner' => new BannerResource($banner)
+//         ], 201);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'error' => 'Có lỗi xảy ra trong quá trình thêm Banner.',
+//             'message' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+// public function updateBannerMultiple(StoreBannerRequest $request, $id)
+// {
+//     try {
+//         $banner = Banner::findOrFail($id);
+
+//         $banner->update([
+//             'image' => json_encode($request->images),
+//             'is_active' => $request->is_active ?? $banner->is_active,
+//         ]);
+
+//         return response()->json([
+//             'message' => 'Banner đã được cập nhật thành công!',
+//             'banner' => new BannerResource($banner)
+//         ], 200);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'error' => 'Có lỗi xảy ra trong quá trình cập nhật Banner.',
+//             'message' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 }

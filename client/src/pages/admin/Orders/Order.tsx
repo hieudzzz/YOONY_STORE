@@ -3,41 +3,69 @@ import { useNavigate } from "react-router-dom"
 import type { Orders } from "../../../interfaces/IOrders";
 import instance from "../../../instance/instance";
 import { toast } from "react-toastify";
-import { Input, Select, Space } from 'antd';
+import { Button, Checkbox, Input, Select} from 'antd';
 import { DatePicker } from 'antd';
 import isBetween from 'dayjs/plugin/isBetween';
 import dayjs from "dayjs";
+import axios from "axios";
 dayjs.extend(isBetween);
 const Orders = () => {
-
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]); // Mảng lưu các mã đơn hàng được chọn
   const [orders, setOrders] = useState<Orders[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchDateRange, setSearchDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
   const OPTIONS = ['pending', 'confirmed', 'preparing_goods', 'shipping', 'delivered', 'canceled'];
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const filteredOptions = OPTIONS.filter((o) => !selectedItems.includes(o));
+  const [loading, setLoading] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>(""); // Lưu trạng thái đã chọn
+  const [errorMessage, setErrorMessage] = useState<string>(""); // Lưu thông báo lỗi nếu có
   // Hàm xử lý tìm kiếm
+
   const handleSearch = (value: string) => {
     setSearchTerm(value);
   };
   const handleDateSearch = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null, dateStrings: [string, string]) => {
     if (dates) {
-        // Kiểm tra nếu dates không null
-        setSearchDateRange([dates[0]!, dates[1]!]); // Chỉ lưu giá trị không null
+      // Kiểm tra nếu dates không null
+      setSearchDateRange([dates[0]!, dates[1]!]); // Chỉ lưu giá trị không null
     } else {
-        setSearchDateRange(null); // Nếu không chọn khoảng ngày, đặt là null
+      setSearchDateRange(null); // Nếu không chọn khoảng ngày, đặt là null
     }
-};
+  };
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allOrderIds = filteredOrders
+        .map((order) => order.id)
+        .filter((id): id is number => id !== undefined) // Loại bỏ undefined
+        .map((id) => id.toString()); // Chuyển sang string[]
+      setSelectedOrders(allOrderIds); // Gán mảng string[]
+    } else {
+      setSelectedOrders([]); // Reset
+    }
+  };
+
+
+  const handleSelectOrder = (checked: boolean, id: string | number) => {
+    const normalizedId = typeof id === 'number' ? id.toString() : id; // Hoặc đảm bảo id là string
+    if (checked) {
+      setSelectedOrders([...selectedOrders, normalizedId]);
+    } else {
+      setSelectedOrders(selectedOrders.filter((order) => order !== normalizedId));
+    }
+
+  };
+
   // Lọc danh sách đơn hàng theo mã sản phẩm
   const filteredOrders = orders.filter((item) => {
     const matchesCode = item.code.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedItems.length === 0 || selectedItems.includes(item.status_order);
     const matchesDate = searchDateRange
-        ? dayjs(item.created_at).isBetween(searchDateRange[0], searchDateRange[1], null, '[]')
-        : true;
+      ? dayjs(item.created_at).isBetween(searchDateRange[0], searchDateRange[1], null, '[]')
+      : true;
 
     return matchesCode && matchesStatus && matchesDate;
-});
+  });
 
   const navigate = useNavigate();
   const { Search } = Input;
@@ -88,62 +116,175 @@ const Orders = () => {
     };
     return statusTranslations[status] || "Trạng thái không xác định";
   };
+
   const fetchOrders = async () => {
+    setLoading(true);
     try {
-      const { data: { data: { data: respone } } } = await instance.get("admin/orders");
-      if (Array.isArray(respone)) {
-        setOrders(respone);
-      } else {
-        console.warn("Dữ liệu không phải là một mảng:", respone);
+      const response = await instance.get("admin/orders");
+      // Kiểm tra nếu phản hồi không hợp lệ
+      if (
+        !response ||
+        !response.data ||
+        !response.data.data ||
+        !Array.isArray(response.data.data.data)
+      ) {
+        throw new Error("Dữ liệu phản hồi không đúng cấu trúc.");
       }
+
+      // Nếu dữ liệu hợp lệ, cập nhật state
+      setOrders(response.data.data.data);
     } catch (error: any) {
+      // Ghi log lỗi để debug
+      console.error("Lỗi khi lấy đơn hàng:", error);
+
+      // Hiển thị thông báo lỗi cho người dùng
       if (error.response) {
-        console.error("Server responded with:", error.response.data);
-        console.error("Status code:", error.response.status);
+        // Lỗi từ phía server (4xx, 5xx)
+        toast.error(`Lỗi từ server: ${error.response.data.message || "Không xác định"}`);
       } else if (error.request) {
-        console.error("No response from server:", error.request);
+        // Lỗi mạng hoặc không nhận được phản hồi
+        toast.error("Không thể kết nối đến server. Vui lòng kiểm tra mạng.");
       } else {
-        console.error("Error in setting up request:", error.message);
+        // Lỗi không mong muốn
+        toast.error(`Lỗi: ${error.message}`);
       }
-      toast.error("Xảy ra lỗi");
+    } finally {
+      setLoading(false);
     }
   };
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value);
+  };
+  const handleUpdateStatus = async () => {
+    if (selectedOrders.length === 0 || !selectedStatus) {
+      toast.warning("Vui lòng chọn đơn hàng và trạng thái.");
+      return;
+    }
+
+    if (!Array.isArray(selectedOrders)) {
+      setErrorMessage("Danh sách đơn hàng không hợp lệ.");
+      return;
+    }
+
+    // Kiểm tra các phần tử trong selectedOrders
+    if (!selectedOrders.every((id) => typeof id === "string" || typeof id === "number")) {
+      setErrorMessage("Danh sách đơn hàng chứa ID không hợp lệ.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(""); // Reset error message
+
+    try {
+      console.log("Selected Orders:", selectedOrders); // Log giá trị để kiểm tra
+      console.log("Selected Status:", selectedStatus); // Log giá trị để kiểm tra
+
+      const response = await instance.post("admin/order-update_much", {
+        ids: selectedOrders,
+        status: selectedStatus,
+      });
+
+      if (response.status === 200) {
+        toast.success("Cập nhật trạng thái thành công!");
+        fetchOrders();
+        setSelectedStatus("");
+        setSelectedOrders([]);
+      }
+    } catch (error) {
+      console.error("Đã có lỗi khi cập nhật trạng thái:", error);
+
+      // Kiểm tra lỗi từ API
+      if (axios.isAxiosError(error) && error.response) {
+        setErrorMessage(error.response.data.message || "Đã có lỗi xảy ra khi cập nhật trạng thái.");
+      } else {
+        setErrorMessage("Đã có lỗi xảy ra.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
   const { RangePicker } = DatePicker;
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="m-4 flex space-x-4">
-        <Space direction="vertical" className="">
-          <Search
-            placeholder="Mã đơn hàng (code)"
-            allowClear
-            enterButton="Search"
-            size="large"
-            onSearch={handleSearch}
-          />
-        </Space>
-        <Space direction="vertical" size={12}>
-          <RangePicker size="large"  onChange={handleDateSearch}/>
-        </Space>
+      <div className="m-4 flex flex-wrap items-center gap-4">
+        {/* Tìm kiếm theo mã đơn hàng */}
+        <Search
+          placeholder="Mã đơn hàng (code)"
+          allowClear
+          enterButton="Search"
+          size="large"
+          onSearch={handleSearch}
+          className="flex-1 min-w-[200px]"
+        />
+
+        {/* Chọn khoảng thời gian */}
+        <RangePicker
+          size="large"
+          onChange={handleDateSearch}
+          className="flex-1 min-w-[200px]"
+        />
+
+        {/* Bộ lọc theo trạng thái */}
         <Select
-          className="w-2/4"
           mode="multiple"
           placeholder="Trạng thái"
           value={selectedItems}
-          onChange={setSelectedItems}
-          onSelect={() => (document.activeElement as HTMLElement)?.blur()} // Tự động thu gọn khi chọn xong
-          style={{ width: '40%' }}
+          onChange={(value: string[]) => setSelectedItems(value)}
+          onSelect={() => (document.activeElement as HTMLElement)?.blur()}
+          className="flex-1 min-w-[200px]"
           options={filteredOptions.map((item) => ({
             value: item,
             label: item,
           }))}
         />
+
+        {/* Chọn trạng thái */}
+        <Select
+          showSearch
+          placeholder="Chọn trạng thái"
+          value={selectedStatus || undefined} // Đảm bảo placeholder hiển thị khi không có giá trị
+          onChange={handleStatusChange}
+          className="flex-1 min-w-[200px]"
+          filterOption={(input, option) =>
+            (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+          }
+          options={[
+            { value: "pending", label: "Chờ xác nhận" },
+            { value: "confirmed", label: "Đã xác nhận" },
+            { value: "preparing_goods", label: "Chuẩn bị hàng" },
+            { value: "shipping", label: "Đang giao hàng" },
+            { value: "delivered", label: "Đã giao hàng" },
+          ]}
+        />
+
+
+        {/* Nút đồng bộ */}
+        <Button
+          type="primary"
+          className="p-2 text-xs rounded-lg flex-shrink-0"
+          onClick={handleUpdateStatus}
+          loading={loading}
+          disabled={selectedOrders.length === 0 || !selectedStatus}
+        >
+          Đồng bộ
+        </Button>
       </div>
+
       <table className="min-w-full bg-white">
         <thead className="bg-primary">
           <tr>
+            <th className="py-3 px-4 text-left text-xs text-white font-bold uppercase tracking-wider">
+              <Checkbox
+                checked={selectedOrders.length === filteredOrders.length}
+                indeterminate={selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+              />
+            </th>
             <th className="py-3 px-4 text-left text-xs text-white font-bold uppercase tracking-wider">STT</th>
             <th className="py-3 px-4 text-left text-xs text-white font-bold uppercase tracking-wider">Mã đơn hàng</th>
             <th className="py-3 px-4 text-left text-xs text-white font-bold uppercase tracking-wider">Tổng tiền</th>
@@ -154,7 +295,15 @@ const Orders = () => {
         </thead>
         <tbody className="divide-y divide-secondary-200">
           {filteredOrders.map((item, index) => (
+
             <tr key={item.id}>
+              <td className="px-4 py-3">
+                <Checkbox
+                  checked={selectedOrders.includes(item.id?.toString() || '')}
+                  onChange={(e) => handleSelectOrder(e.target.checked, item.id?.toString() || '')}
+                />
+
+              </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-secondary-900 text-primary">
                 {index + 1}
               </td>
@@ -226,4 +375,7 @@ const Orders = () => {
   )
 }
 export default Orders
+
+
+
 

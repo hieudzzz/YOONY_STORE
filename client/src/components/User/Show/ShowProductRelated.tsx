@@ -9,8 +9,8 @@ type Prop = {
 const ShowProductRelated = ({ related_products }: Prop) => {
   return (
     <section>
-      <h2 className="text-base md:text-lg lg:text-xl font-medium uppercase flex items-center gap-2">
-        Sản phẩm bạn có thể thích
+      <h2 className="text-base md:text-xl font-medium uppercase product-related flex items-center gap-2">
+        Các sản phẩm khác
       </h2>
       <Swiper
         slidesPerView={5}
@@ -35,7 +35,7 @@ const ShowProductRelated = ({ related_products }: Prop) => {
                 is_featured={related_product.is_featured === 1 ? true : false}
                 is_good_deal={related_product.is_good_deal === 1 ? true : false}
                 id_Product={related_product.id!}
-                category={related_product?.category?.slug}
+                category={related_product?.category?.slug ?? ""}
               />
             </SwiperSlide>
           );

@@ -68,7 +68,7 @@ const ProductRatingItem = ({
           >
             {name}
           </Link>
-          <p className="text-sm text-secondary/50">
+          <p className="text-[13px] line-clamp-1 text-secondary/50">
             {attribute_values.length > 0 &&
               Object.entries(
                 attribute_values.reduce<Record<string, string[]>>(
@@ -238,7 +238,7 @@ const RatingDetailOrder = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {ratingDetail.items.map((item, index) => {
           const isMultipleVariants = item.variant_lists.length !== 1;
-          console.log(item);
+          // console.log(item);
           if (isMultipleVariants) {
             return (
               <ProductRatingItem

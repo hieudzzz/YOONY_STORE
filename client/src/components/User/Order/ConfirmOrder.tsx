@@ -4,15 +4,16 @@ import instance from "../../../instance/instance";
 import { useContext, useEffect, useState } from "react";
 import CartContext from "../../../contexts/CartContext";
 import { useNavigate } from "react-router-dom";
-import { Modal, Input, Progress, message } from "antd";
+import { Modal, Input, Progress, message, ConfigProvider } from "antd";
 import { IVoucher } from "../../../interfaces/IVouchers";
 import queryString from "query-string";
 import { useRef } from "react";
 type Prop = {
   current: number;
+  setIsLoading: (isLoading: boolean) => void;
 };
 
-const ConfirmOrder = ({ current }: Prop) => {
+const ConfirmOrder = ({ current, setIsLoading }: Prop) => {
   const { dispatch } = useContext(CartContext);
   const final_total = JSON.parse(localStorage.getItem("final_total") || "0");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,77 +23,169 @@ const ConfirmOrder = ({ current }: Prop) => {
   const [voucherCheck, setCheckVoucher] = useState<IVoucher | undefined>(
     undefined
   );
+  const [modal2Open, setModal2Open] = useState(false);
+  const [errorConfirmOrder, setErrorConfirmOrder] = useState<string>("");
   const callbackProcessedRef = useRef(false);
-  const parsed = queryString.parse(location.search);
   const navigate = useNavigate();
-
   useEffect(() => {
     (async () => {
+      setIsLoading(true);
       try {
+        const parsed = queryString.parse(location.search);
         const vnp_ResponseCode = parsed?.vnp_ResponseCode;
+        const resultCode = parsed?.resultCode;
         const vnp_TransactionStatus = parsed?.vnp_TransactionStatus;
-
-        // Kiểm tra xem callback đã được xử lý chưa
-        const isCallbackProcessed = localStorage.getItem("vnpay_callback_processed");
-        const savedVoucher = JSON.parse(localStorage.getItem('selected_voucher') || 'null');
+        const isCallbackProcessed = localStorage.getItem("callback_processed");
+        const savedVoucher = JSON.parse(
+          localStorage.getItem("selected_voucher") || "null"
+        );
         const finalPaymentAmountVnpay = savedVoucher
-        ? final_total - savedVoucher.discount
-        : final_total;
-        if (vnp_ResponseCode && !isCallbackProcessed && !callbackProcessedRef.current) {
-          localStorage.setItem("vnpay_callback_processed", "true");
-          callbackProcessedRef.current = true;
+          ? savedVoucher.discount_type === "percentage"
+            ? (() => {
+                const calculatedDiscount =
+                  (final_total * savedVoucher.discount) / 100;
+                const finalDiscount =
+                savedVoucher.max_discount &&
+                  calculatedDiscount > savedVoucher.max_discount
+                    ? savedVoucher.max_discount
+                    : calculatedDiscount;
+                return final_total - finalDiscount;
+              })()
+            : savedVoucher.discount > final_total
+            ? 0
+            : final_total - savedVoucher.discount
+          : final_total;
 
-          const orderDataRaw = localStorage.getItem("orderData");
-          const parsedOrderData = JSON.parse(orderDataRaw!);
+        if (isCallbackProcessed || callbackProcessedRef.current) {
+          return;
+        }
 
+        localStorage.setItem("callback_processed", "true");
+        callbackProcessedRef.current = true;
+
+        const orderDataRaw = localStorage.getItem("orderData");
+        const parsedOrderData = JSON.parse(orderDataRaw!);
+
+        const formattedAddress = [
+          parsedOrderData?.addressDetail,
+          parsedOrderData?.ward,
+          parsedOrderData?.district,
+          parsedOrderData?.province,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        if (vnp_ResponseCode && vnp_TransactionStatus === "00") {
           const { data } = await instance.post("vnpay/callback", {
-            coupon_id: savedVoucher?.id,
-            discount_amount: savedVoucher?.discount,
             ...parsed,
           });
-          console.log(data)
           if (
             vnp_ResponseCode === "00" &&
             vnp_TransactionStatus === "00" &&
             String(data.status) === "success"
           ) {
-            message.success("Thanh toán thành công!");
+            // message.success("Thanh toán thành công!");
             const checkoutData = await instance.post("checkout-vnpay", {
               name: parsedOrderData.fullName,
               tel: parsedOrderData.phone,
               coupon_id: savedVoucher?.id,
               discount_amount: savedVoucher?.discount,
               final_total: finalPaymentAmountVnpay,
+              address: formattedAddress,
               ...parsedOrderData,
             });
 
             if (checkoutData) {
-              const id_carts = JSON.parse(localStorage.getItem("id_cart") || "[]");
+              const id_carts = JSON.parse(
+                localStorage.getItem("id_cart") || "[]"
+              );
               dispatch({
                 type: "REMOVE_SELECTED",
                 payload: id_carts,
               });
               toast.success(checkoutData.data.message);
               navigate("/user-manager/user-orders");
-              ["id_cart", "orderData", "final_total","vnpay_callback_processed","selected_voucher"].forEach((key) =>
-                localStorage.removeItem(key)
+              [
+                "id_cart",
+                "orderData",
+                "final_total",
+                "callback_processed",
+                "selected_voucher",
+              ].forEach((key) => localStorage.removeItem(key));
+            }
+          }
+        } else {
+          await instance.post("vnpay/callback", {
+            ...parsed,
+          });
+          // console.log(data);
+        }
+
+        if (resultCode) {
+          const { data } = await instance.post("momo/callback", {
+            ...parsed,
+          });
+
+          if (resultCode === "0" && String(data.status) === "success") {
+            // message.success("Thanh toán thành công!");
+            const checkoutData = await instance.post("checkout-momo", {
+              name: parsedOrderData.fullName,
+              tel: parsedOrderData.phone,
+              coupon_id: savedVoucher?.id,
+              discount_amount: savedVoucher?.discount,
+              final_total: finalPaymentAmountVnpay,
+              address: formattedAddress,
+              ...parsedOrderData,
+            });
+
+            if (checkoutData) {
+              const id_carts = JSON.parse(
+                localStorage.getItem("id_cart") || "[]"
               );
+              dispatch({
+                type: "REMOVE_SELECTED",
+                payload: id_carts,
+              });
+              toast.success(checkoutData.data.message);
+              navigate("/user-manager/user-orders");
+              [
+                "id_cart",
+                "orderData",
+                "final_total",
+                "callback_processed",
+                "selected_voucher",
+              ].forEach((key) => localStorage.removeItem(key));
             }
           }
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false);
       }
     })();
-
     return () => {
       callbackProcessedRef.current = false;
+      localStorage.removeItem("callback_processed");
     };
-  }, []);
+  }, [dispatch, final_total, navigate]);
 
   const finalPaymentAmount = voucherCheck
-    ? final_total - voucherCheck.discount
-    : final_total;
+  ? voucherCheck.discount_type === "percentage"
+    ? (() => {
+        const calculatedDiscount =
+          (final_total * voucherCheck.discount) / 100;
+        const finalDiscount =
+          voucherCheck.max_discount &&
+          calculatedDiscount > voucherCheck.max_discount
+            ? voucherCheck.max_discount
+            : calculatedDiscount;
+        return final_total - finalDiscount;
+      })()
+    : voucherCheck.discount > final_total
+    ? 0
+    : final_total - voucherCheck.discount
+  : final_total;
 
   const { Search } = Input;
 
@@ -109,9 +202,20 @@ const ConfirmOrder = ({ current }: Prop) => {
   };
 
   const submitOrder = async () => {
+    setIsLoading(true);
     try {
       const orderDataRaw = localStorage.getItem("orderData");
       const parsedOrderData = JSON.parse(orderDataRaw!);
+
+      const formattedAddress = [
+        parsedOrderData?.addressDetail,
+        parsedOrderData?.ward,
+        parsedOrderData?.district,
+        parsedOrderData?.province,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
       if (parsedOrderData?.payment_method === "COD") {
         const { data } = await instance.post("checkout", {
           name: parsedOrderData.fullName,
@@ -119,6 +223,7 @@ const ConfirmOrder = ({ current }: Prop) => {
           coupon_id: voucherCheck?.id,
           discount_amount: voucherCheck?.discount,
           final_total: finalPaymentAmount,
+          address: formattedAddress,
           ...parsedOrderData,
         });
 
@@ -130,8 +235,8 @@ const ConfirmOrder = ({ current }: Prop) => {
           });
           toast.success(data.message);
           navigate("/user-manager/user-orders");
-          ["id_cart", "orderData", "final_total","selected_voucher"].forEach((key) =>
-            localStorage.removeItem(key)
+          ["id_cart", "orderData", "final_total", "selected_voucher"].forEach(
+            (key) => localStorage.removeItem(key)
           );
         }
       }
@@ -142,15 +247,34 @@ const ConfirmOrder = ({ current }: Prop) => {
           coupon_id: voucherCheck?.id,
           discount_amount: voucherCheck?.discount,
           final_total: finalPaymentAmount,
+          address: formattedAddress,
           ...parsedOrderData,
         });
 
         if (data) {
-          console.log(data);
+          window.location.assign(data.paymentUrl);
+        }
+      }
+      if (parsedOrderData?.payment_method === "MOMO") {
+        const { data } = await instance.post("checkout", {
+          name: parsedOrderData.fullName,
+          tel: parsedOrderData.phone,
+          coupon_id: voucherCheck?.id,
+          discount_amount: voucherCheck?.discount,
+          final_total: finalPaymentAmount,
+          address: formattedAddress,
+          ...parsedOrderData,
+        });
+
+        if (data) {
           window.location.assign(data.paymentUrl);
         }
       }
     } catch (error) {
+      if (error) {
+        setModal2Open(true);
+        setErrorConfirmOrder(error.response?.data?.error);
+      }
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message);
       } else if (error instanceof Error) {
@@ -158,6 +282,8 @@ const ConfirmOrder = ({ current }: Prop) => {
       } else {
         toast.error("Đã xảy ra lỗi không mong muốn");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -200,7 +326,7 @@ const ConfirmOrder = ({ current }: Prop) => {
     );
     if (validVoucher) {
       setCheckVoucher(validVoucher);
-      localStorage.setItem('selected_voucher', JSON.stringify(validVoucher));
+      localStorage.setItem("selected_voucher", JSON.stringify(validVoucher));
       message.success("Mã giảm giá đã được áp dụng");
     } else {
       message.warning("Mã voucher không hợp lệ!");
@@ -208,7 +334,7 @@ const ConfirmOrder = ({ current }: Prop) => {
   };
 
   return (
-    <div className="col-span-3 border border-input p-3 rounded-md h-fit space-y-6 sticky top-20 bg-util">
+    <div className="col-span-12 lg:col-span-3 border border-input p-3 rounded-md h-fit space-y-6 sticky top-20 bg-util">
       <Modal
         title="Chọn Yoony Voucher"
         open={isModalOpen}
@@ -226,7 +352,33 @@ const ConfirmOrder = ({ current }: Prop) => {
           />
         </form>
         <div className="space-y-5 max-h-[400px] overflow-y-auto pr-0.5 py-1">
-          {voucherCarts &&
+          {voucherCarts.length === 0 ? (
+            <div className="flex flex-col items-center text-secondary/20 space-y-2 justify-center min-h-[50vh]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-16"
+                viewBox="0 0 64 41"
+              >
+                <g fill="none" fillRule="evenodd" transform="translate(0 1)">
+                  <ellipse
+                    cx="32"
+                    cy="33"
+                    fill="#f5f5f5"
+                    rx="32"
+                    ry="7"
+                  ></ellipse>
+                  <g fillRule="nonzero" stroke="#d9d9d9">
+                    <path d="M55 12.76L44.854 1.258C44.367.474 43.656 0 42.907 0H21.093c-.749 0-1.46.474-1.947 1.257L9 12.761V22h46v-9.24z"></path>
+                    <path
+                      fill="#fafafa"
+                      d="M41.613 15.931c0-1.605.994-2.93 2.227-2.931H55v18.137C55 33.26 53.68 35 52.05 35h-40.1C10.32 35 9 33.259 9 31.137V13h11.16c1.233 0 2.227 1.323 2.227 2.928v.022c0 1.605 1.005 2.901 2.237 2.901h14.752c1.232 0 2.237-1.308 2.237-2.913v-.007z"
+                    ></path>
+                  </g>
+                </g>
+              </svg>
+              <p>Không có mã giảm nào đủ điều kiện</p>
+            </div>
+          ) : (
             voucherCarts
               .filter((item) => {
                 return item.code.includes(valueSearch.toUpperCase());
@@ -285,11 +437,18 @@ const ConfirmOrder = ({ current }: Prop) => {
                           <h4 className="font-medium line-clamp-1">
                             {voucherCart.name}
                           </h4>
-                          <span className="text-secondary/65 block">
-                            Đơn Tối Thiểu đ
-                            {voucherCart?.min_order_value?.toLocaleString()} - đ
-                            {voucherCart?.max_order_value?.toLocaleString()}
-                          </span>
+                          {voucherCart.discount_type !== "percentage" ? (
+                            <span className="text-secondary/65 block">
+                              Đơn Tối Thiểu đ
+                              {voucherCart?.min_order_value?.toLocaleString()} -
+                              đ{voucherCart?.max_order_value?.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-secondary/65 block">
+                              Giảm giá {voucherCart?.discount}% - Giảm tối đa: {voucherCart?.max_discount.toLocaleString()}đ
+                            </span>
+                          )}
+
                           <div className="flex items-center gap-2">
                             <p className="flex items-center gap-1 text-primary text-xs bg-primary/10 py-1 px-2 rounded-[2px]">
                               <svg
@@ -366,7 +525,8 @@ const ConfirmOrder = ({ current }: Prop) => {
                     </div>
                   </div>
                 );
-              })}
+              })
+          )}
         </div>
       </Modal>
       <form action="">
@@ -390,7 +550,7 @@ const ConfirmOrder = ({ current }: Prop) => {
               </svg>
             </label>
           </div>
-          <div className="flex w-auto items-center rounded-[5px] overflow-hidden">
+          <div className="flex items-center rounded-[5px] overflow-hidden">
             <input
               type="text"
               onClick={showModal}
@@ -403,7 +563,7 @@ const ConfirmOrder = ({ current }: Prop) => {
               type="button"
               className={`block ${
                 voucherCheck ? "bg-gray-400" : "bg-primary"
-              } w-full h-[35px] px-2 text-sm text-util`}
+              } w-auto lg:w-full h-[35px] px-2 text-sm text-util`}
               onClick={handleCheckVoucher}
               disabled={voucherCheck !== undefined}
             >
@@ -415,8 +575,22 @@ const ConfirmOrder = ({ current }: Prop) => {
               Khuyến mãi:{" "}
               <span className="text-sm text-primary">
                 {voucherCheck
-                  ? `-${voucherCheck?.discount.toLocaleString()} đ`
-                  : `0đ`}
+                  ? voucherCheck.discount_type === "percentage"
+                    ? (() => {
+                        const calculatedDiscount =
+                          (final_total * voucherCheck.discount) / 100;
+                        const finalDiscount =
+                          voucherCheck.max_discount &&
+                          calculatedDiscount > voucherCheck.max_discount
+                            ? voucherCheck.max_discount
+                            : calculatedDiscount;
+                        return `-${finalDiscount.toLocaleString()}đ`;
+                      })()
+                    : `-${(voucherCheck.discount > final_total
+                        ? final_total
+                        : voucherCheck.discount
+                      ).toLocaleString()}đ`
+                  : "0đ"}
               </span>
             </label>
             <label className="text-sm block">
@@ -429,12 +603,35 @@ const ConfirmOrder = ({ current }: Prop) => {
       <div className="space-y-2">
         <p className="font-medium">
           Tổng thanh toán:{" "}
-          <span className="text-primary">
+          {/* <span className="text-primary">
             {(voucherCheck
-              ? final_total - voucherCheck.discount
+              ? voucherCheck.discount_type === "percentage"
+                ? final_total - (final_total * voucherCheck.discount) / 100
+                : voucherCheck.discount > final_total
+                ? 0
+                : final_total - voucherCheck.discount
               : final_total
             ).toLocaleString()}
             đ
+          </span> */}
+          <span className="text-sm text-primary">
+            {(voucherCheck
+              ? voucherCheck.discount_type === "percentage"
+                ? (() => {
+                    const calculatedDiscount =
+                      (final_total * voucherCheck.discount) / 100;
+                    const finalDiscount =
+                      voucherCheck.max_discount &&
+                      calculatedDiscount > voucherCheck.max_discount
+                        ? voucherCheck.max_discount
+                        : calculatedDiscount;
+                    return final_total - finalDiscount;
+                  })()
+                : voucherCheck.discount > final_total
+                ? 0
+                : final_total - voucherCheck.discount
+              : final_total
+            ).toLocaleString()}đ
           </span>
         </p>
       </div>
@@ -457,6 +654,71 @@ const ConfirmOrder = ({ current }: Prop) => {
           Đảm bảo an toàn và bảo mật
         </p>
       </div>
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: "#ff9900",
+          },
+        }}
+      >
+        <Modal
+          centered
+          open={modal2Open}
+          onOk={() => navigate("/gio-hang")}
+          onCancel={() => setModal2Open(false)}
+          cancelText={"Trở lại"}
+          okText={"Giỏ hàng"}
+          width={320}
+        >
+          <div className="space-y-5 mb-7">
+            <div className="p-5 bg-primary/10 text-red-400 w-fit rounded-full mx-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="size-10"
+                color={"currentColor"}
+                fill={"none"}
+              >
+                <path
+                  d="M11 22C10.1818 22 9.40019 21.6698 7.83693 21.0095C3.94564 19.3657 2 18.5438 2 17.1613C2 16.7742 2 10.0645 2 7M11 22L11 11.3548M11 22C11.6167 22 12.12 21.8124 13 21.4372M20 7V12"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 15L19 18M19 18L22 21M19 18L16 21M19 18L22 15"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M7.32592 9.69138L4.40472 8.27785C2.80157 7.5021 2 7.11423 2 6.5C2 5.88577 2.80157 5.4979 4.40472 4.72215L7.32592 3.30862C9.12883 2.43621 10.0303 2 11 2C11.9697 2 12.8712 2.4362 14.6741 3.30862L17.5953 4.72215C19.1984 5.4979 20 5.88577 20 6.5C20 7.11423 19.1984 7.5021 17.5953 8.27785L14.6741 9.69138C12.8712 10.5638 11.9697 11 11 11C10.0303 11 9.12883 10.5638 7.32592 9.69138Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M5 12L7 13"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 4L6 9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <p className="text-red-400 text-center">{errorConfirmOrder}</p>
+          </div>
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 };

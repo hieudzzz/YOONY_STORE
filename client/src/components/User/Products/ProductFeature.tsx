@@ -3,29 +3,11 @@ import CardProductAll from "./CardProductAll";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, HashNavigation } from "swiper/modules";
 import { IProduct } from "../../../interfaces/IProduct";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
-import instance from "../../../instance/instance";
 import GroupVariantsByColor from "../Show/GroupVariantsByColor";
-const ProductFeature = () => {
-  const [productFeatures, setProductFeatures] = useState<IProduct[]>([]);
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await instance.get("home/products/featured");
-        setProductFeatures(data);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.message);
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Đã xảy ra lỗi không mong muốn");
-        }
-      }
-    })();
-  }, []);
+type Prop = {
+  productFeatures: IProduct[];
+};
+const ProductFeature = ({productFeatures}:Prop) => {
   return (
     <section className="py-5">
       <h2 className="text-base md:text-xl lg:text-2xl font-medium uppercase product-feature flex items-center gap-2">
@@ -39,6 +21,28 @@ const ProductFeature = () => {
         navigation={true}
         modules={[FreeMode, Navigation, HashNavigation]}
         className="mySwiper my-5 flex flex-wrap gap-[25px]"
+        breakpoints={{
+          0: {
+            slidesPerView: 2,
+            spaceBetween: 10,
+          },
+          768: {
+            slidesPerView: 3.3,
+            spaceBetween: 10,
+          },
+          800: {
+            slidesPerView: 3.5,
+            spaceBetween: 10,
+          },
+          884: {
+            slidesPerView: 4,
+            spaceBetween: 10,
+          },
+          1024: {
+            slidesPerView: 5,
+            spaceBetween: 10,
+          },
+        }}
       >
         {productFeatures.map((productFeature) => {
           // const colorVariants = productFeature.variants
@@ -65,7 +69,7 @@ const ProductFeature = () => {
           );
         })}
       </Swiper>
-      <ButtonSeeMore link="/product-feature" />
+      {productFeatures.length >5 && <ButtonSeeMore link="search?filter=feature" />}
     </section>
   );
 };

@@ -11,6 +11,11 @@ const SelectMethodPayment = () => {
       localStorage.setItem("methodPayment", JSON.stringify("COD"));
     }
   }, []);
+  
+  const getMethod = (method: string) => {
+    setPaymentMethod(method);
+    localStorage.setItem("methodPayment", JSON.stringify(method));
+  };
 
   const dataPayments = [
     {
@@ -146,10 +151,6 @@ const SelectMethodPayment = () => {
     },
   ];
 
-  const getMethod = (method: string) => {
-    setPaymentMethod(method);
-    localStorage.setItem("methodPayment", JSON.stringify(method));
-  };
 
   return (
     <div className="space-y-5">

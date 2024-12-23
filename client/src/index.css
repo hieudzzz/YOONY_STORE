@@ -116,7 +116,7 @@ a:hover .number-cart{
   --tw-ring-shadow:none !important;
 }
 
-.product-clothes::before,.product-feature::before,.product-uniform::before{
+.product-clothes::before,.product-feature::before,.product-uniform::before,.product-related::before{
   content:"";
   width: 5px;
   height: 30px;
@@ -134,9 +134,9 @@ a:hover .number-cart{
 .rc-anchor-light.rc-anchor-normal,.rc-anchor-light.rc-anchor-compact {
   border: 1px solid #f6f6f6 !important;
 }
-.ant-tooltip-content{
+/* .ant-tooltip-content{
   display: none !important;
-}
+} */
 
 :where(.css-dev-only-do-not-override-14i19y2).ant-btn-primary,:where(.css-dev-only-do-not-override-14i19y2).ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover{
   background-color: #ff9900;
@@ -249,18 +249,11 @@ a:hover .number-cart{
   color:#ff9900
 }
 
-:where(.css-dev-only-do-not-override-vryruh).ant-table-wrapper .ant-table-thead >tr>th{
+/* .ant-table-wrapper .ant-table-thead >tr>th{
   background-color: #ff9900;
   color: white;
-}
+} */
 
-:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-outlined:not(:disabled):not(.ant-btn-disabled):hover, :where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-dashed:not(:disabled):not(.ant-btn-disabled):hover{
-  color:#ff9900;
-  border-color: #ff9900;
-}
-:where(.css-dev-only-do-not-override-vryruh) a:hover{
-  color:#ff9900;
-}
 
 .mini-cart [data-testid="close-drawer"]{
   top: 40px !important;
@@ -295,7 +288,7 @@ a:hover .number-cart{
 }
 
 :where(.css-dev-only-do-not-override-vryruh).ant-steps .ant-steps-item-finish>.ant-steps-item-container>.ant-steps-item-tail::after{
-  background-color:#ff9900
+  background-color:hwb(36 0% 0%)
 }
 
 :where(.css-dev-only-do-not-override-vryruh).ant-steps{
@@ -361,11 +354,121 @@ a:hover .number-cart{
   height: 12px !important;
   width: 12px !important;
 }
+.rating-product-detail .anticon-star svg{
+  height: 24px !important;
+  width: 24px !important;
+}
 
-.rating-scroll-done::-webkit-scrollbar-thumb{
+.rating-filter .anticon-star svg{
+  height: 20px !important;
+  width: 20px !important;
+}
+
+.rating-product-detail.ant-rate,.rating-filter.ant-rate{
+  color: #ff9900 !important;
+}
+
+.address-scroll::-webkit-scrollbar-thumb,.rating-scroll-done::-webkit-scrollbar-thumb{
   background-color: #FAFAFA;
 }
 
+.listinventory-scroll::-webkit-scrollbar-thumb{
+  background-color: #ffebce;
+}
+
+
 .ant-steps-item-description{
   font-size: 12px !important;
+}
+
+.steps-order .ant-steps{
+  background-color: rgba(255, 153, 0,0.1) !important;
+}
+
+/* Style cho nút Xóa */
+.my-swal .swal-button--confirm {
+  background-color: #ff9900;
+}
+.my-swal .swal-button--confirm:hover {
+  background-color: #ff9900;
+}
+.my-swal .swal-button--confirm:focus {
+  box-shadow: 0 0 0 0.1rem rgba(255, 153, 0,0.5);
+}
+.my-swal .swal-button--confirm:focus-visible {
+    box-shadow: 0 0 0 0.2rem #ff9900;
+    background-color: #ff9900;
+}
+.my-swal .swal-button--confirm:active {
+    background-color: #ff9900 !important;
+    box-shadow: inset 0 3px 5px #ff9900 !important;
+}
+
+
+/* Style cho nút Hủy */
+
+.my-swal .swal-button--cancel {
+  background-color: transparent;
+  border: 1px solid #ff9900;
+  color: #ff9900;
+}
+.my-swal .swal-button--cancel:hover {
+  background-color: transparent;
+}
+.my-swal .swal-button--cancel:focus {
+  box-shadow: 0 0 0 0.1rem transparent;
+}
+.my-swal .swal-button--cancel:focus-visible {
+    box-shadow: 0 0 0 0.2rem transparent;
+    background-color: transparent;
+}
+.my-swal .swal-button--cancel:active {
+    background-color: transparent !important;
+    box-shadow: inset 0 3px 5px transparent !important;
+}
+
+
+/* Style cho title */
+.my-swal .swal-title {
+  color: #ff9900;
+}
+
+/* Style cho icon */
+.my-swal .swal-icon--warning {
+  border-color: #ff9900 !important;
+}
+
+.my-swal .swal-icon--warning__body,.my-swal .swal-icon--warning__dot {
+  background-color: #ff9900 !important;
+}
+
+/* Style cho text */
+.my-swal .swal-text {
+  color: #666;
+}
+
+/* Style cho button active */
+.my-swal .swal-button:active {
+  background-color: #ff9900;
+  background-color: #febc57;
+}
+
+
+/* Style cho overlay */
+.swal-overlay{
+  
+  background-color: rgba(0,0,0,.25) !important;
+}
+
+.shadow-chart{
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 0px 20px;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

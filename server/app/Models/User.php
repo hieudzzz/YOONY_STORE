@@ -15,13 +15,13 @@ class User extends Authenticatable
         'email',
         'password',
         'tel',
-        'address',
+        'address_id',
         'avatar',
         'provider',
         'provider_id',
         'provider_token',
         'remember_token',
-        'role', 
+        'role',
     ];
 
     protected $hidden = [
@@ -39,13 +39,25 @@ class User extends Authenticatable
         return $this->hasMany(Wishlist::class, 'user_id', 'id');
     }
 
-    public function coupons() {
+    public function coupons()
+    {
         return $this->belongsToMany(Coupon::class, 'coupon_user');
     }
 
     // một người dùng có thể tạo nhiều đánh giá
-     public function rates()
-     {
-         return $this->hasMany(Rate::class);
-     }
+    public function rates()
+    {
+        return $this->hasMany(Rate::class);
+    }
+
+    public function addresses()
+    {
+        return $this->belongsToMany(Address::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
 }

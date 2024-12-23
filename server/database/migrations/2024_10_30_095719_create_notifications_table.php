@@ -16,7 +16,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->text('content');
+            $table->string('order_code')->nullable();
+            $table->string('status')->nullable();
             $table->boolean('is_read')->default(false);
+            $table->json('is_delivered')->nullable();
             $table->timestamps();
         });
     }

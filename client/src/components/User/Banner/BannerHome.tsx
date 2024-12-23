@@ -1,7 +1,10 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination, Navigation,Autoplay } from "swiper/modules";
-
-const BannerHome = () => {
+import { Pagination, Navigation, Autoplay } from "swiper/modules";
+import { IBanner } from "../../../interfaces/IBanners";
+type Prop={
+  banners:IBanner[]
+}
+const BannerHome = ({banners}:Prop) => {
   return (
     <>
       <Swiper
@@ -11,31 +14,25 @@ const BannerHome = () => {
         pagination={{
           clickable: true,
         }}
-        autoplay={
-            {
-                delay: 2500,
-                disableOnInteraction:false
-            }
-        }
+        autoplay={{
+          delay: 2500,
+          disableOnInteraction: false,
+        }}
         navigation={true}
-        modules={[Pagination, Navigation,Autoplay]}
-        className="mySwiper max-h-[400px] w-full lg:w-[75%] h-full rounded-lg"
+        modules={[Pagination, Navigation, Autoplay]}
+        className={`mySwiper max-h-[400px] w-full ${banners.length <=3?'lg:w-full' : 'lg:w-[75%]'} h-full rounded-lg`}
       >
-        <SwiperSlide>
-            <img src="../../../src/assets/images/yoony-banner-1.jpeg" alt="yoony-banner-1" className="w-full h-full object-cover hover:cursor-pointer" />
-        </SwiperSlide>
-        <SwiperSlide>
-            <img src="../../../src/assets/images/yoony-banner-2.jpeg" alt="yoony-banner-2" className="w-full h-full object-cover hover:cursor-pointer" />
-        </SwiperSlide>
-        <SwiperSlide>
-            <img src="../../../src/assets/images/yoony-banner-3.jpeg" alt="yoony-banner-3" className="w-full h-full object-cover hover:cursor-pointer" />
-        </SwiperSlide>
-        <SwiperSlide>
-            <img src="../../../src/assets/images/yoony-banner-4.jpeg" alt="yoony-banner-4" className="w-full h-full object-cover hover:cursor-pointer" />
-        </SwiperSlide>
-        <SwiperSlide>
-            <img src="../../../src/assets/images/yoony-banner-5.jpeg" alt="yoony-banner-5" className="w-full h-full object-cover hover:cursor-pointer" />
-        </SwiperSlide>
+        {banners
+        .sort((a: IBanner, b: IBanner) => a?.id - b?.id)
+        .slice(0, 5).map((banner,index) => (
+          <SwiperSlide key={index+1}>
+            <img
+              src={banner.image}
+              alt="yoony-banner-1"
+              className="w-full h-full object-cover hover:cursor-pointer"
+            />
+          </SwiperSlide>
+        ))}
       </Swiper>
     </>
   );

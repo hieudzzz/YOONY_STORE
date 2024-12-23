@@ -4,10 +4,15 @@ import { Controller, useForm } from "react-hook-form";
 import axios from "axios";
 import instance from "../../../instance/instance";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../providers/AuthProvider";
+import { Link, useNavigate } from "react-router-dom";
 import { Input, message } from "antd";
 import LoginGoogleFaceBook from "./LoginGoogleFaceBook";
+import { useCallback, useContext } from "react";
+import { NotificationsContext } from "../../../contexts/NotificationsContext";
+import CartContext from "../../../contexts/CartContext";
+
+export const WISHLIST_KEY = "wishlists";
+export const CARTLOCAL_KEY = "cartLocal";
 
 const Login = () => {
   const {
@@ -17,7 +22,48 @@ const Login = () => {
     handleSubmit,
   } = useForm<Ilogin>();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { dispatch: dispatchNotification } = useContext(NotificationsContext);
+  const { dispatch: dispatchCart } = useContext(CartContext);
+
+  const callNotification = useCallback(
+    async (idUser: number) => {
+      const {
+        data: { data: response },
+      } = await instance.get(`notification/${idUser}`);
+      if (response) {
+        dispatchNotification({ type: "LIST", payload: response });
+      }
+    },
+    [dispatchNotification]
+  );
+
+  const fetchWishlists = useCallback(async () => {
+    const { data } = await instance.get("list-wishlists-check");
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(data.wishlists));
+  }, []);
+
+  const addCartLocal = useCallback(
+    async (idUser: number) => {
+      const existingCart = JSON.parse(
+        localStorage.getItem(CARTLOCAL_KEY) || "[]"
+      );
+
+      if (existingCart.length === 0) return;
+
+      const formattedCart = existingCart.map((item) => ({
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+      }));
+
+      const { data } = await instance.post(`addcartMultil/${idUser}`, {
+        local_cart: formattedCart,
+      });
+      dispatchCart({ type: "ADD", payload: data.data });
+      localStorage.removeItem(CARTLOCAL_KEY);
+    },
+    [dispatchCart]
+  );
+
   const onSubmit = async (formData: Ilogin) => {
     try {
       const { data } = await instance.post("login", formData);
@@ -28,8 +74,13 @@ const Login = () => {
           sameSite: "strict",
         });
         localStorage.setItem("userInfor", JSON.stringify(data.user));
-        login(data.user);
+        await Promise.all([
+          fetchWishlists(),
+          callNotification(data.user.id!),
+          addCartLocal(data.user.id!)
+        ]);
         message.success("Đăng nhập thành công!");
+        window.dispatchEvent(new Event("auth-change"));
         navigate("/");
       }
     } catch (error) {
@@ -67,29 +118,37 @@ const Login = () => {
               className="block focus:!border-primary/50 h-10 border-input px-3 rounded-lg w-full focus:!shadow-none"
             />
           </div>
-          <div>
-            <div className="mb-2 block">
-              <Label htmlFor="password-input" value="Mật khẩu" />
+          <div className="space-y-1">
+            <div className="space-y-2">
+              <div className="block">
+                <Label htmlFor="password-input" value="Mật khẩu" />
+              </div>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <Input.Password
+                    {...field}
+                    placeholder="Mật khẩu"
+                    className="h-10"
+                  />
+                )}
+              />
             </div>
-            <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
-                <Input.Password
-                  {...field}
-                  placeholder="Mật khẩu"
-                  className="h-10"
-                />
-              )}
-            />
+            <div>
+              <Link to={"/reset-password"} className="text-sm text-primary">
+                Quên mật khẩu ?
+              </Link>
+            </div>
           </div>
         </div>
         <button
           type="submit"
-          className="w-fit bg-primary py-2 px-6 rounded-md text-util mx-auto block font-[400]"
+          className="w-fit bg-primary py-2 px-6 rounded-md text-util mx-auto block font-[400] hover:bg-transparent transition-all duration-200 hover:text-primary hover:border-primary border border-transparent active:scale-90 active:shadow-lg active:bg-primary-dark"
         >
           ĐĂNG NHẬP
         </button>
+
         <span className="text-secondary/50 block text-center">HOẶC</span>
         <LoginGoogleFaceBook />
       </form>

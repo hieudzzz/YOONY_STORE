@@ -10,7 +10,7 @@ class Variant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['price', 'sale_price','end_sale','image', 'product_id'];
+    protected $fillable = ['price', 'sale_price', 'end_sale', 'image', 'product_id'];
 
     public function attributeValues()
     {
@@ -31,5 +31,18 @@ class Variant extends Model
     {
         return $this->hasOne(InventoryStock::class);
     }
+    public function inventoryImports()
+    {
+        return $this->hasMany(InventoryImport::class); // Quan hệ với InventoryImport
+    }
 
+    public function inventoryImportHistories()
+    {
+        return $this->hasMany(InventoryImportHistory::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 }

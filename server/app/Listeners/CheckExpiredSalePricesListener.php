@@ -6,6 +6,7 @@ use App\Events\CheckExpiredSalePrices;
 use App\Models\Variant;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 
 class CheckExpiredSalePricesListener
 {
@@ -20,18 +21,22 @@ class CheckExpiredSalePricesListener
     /**
      * Handle the event.
      */
-    public function handle(CheckExpiredSalePrices $event)
-    {
-        // Lấy tất cả các variant có giá khuyến mãi đã hết hạn
-        $variants = Variant::where('end_sale', '<', now())
-            ->whereNotNull('sale_price')
-            ->get();
+    public function handle()
+{
+    $now = now();
+    Log::info('Handling event at:', ['time' => $now]);
 
-        foreach ($variants as $variant) {
-            // Xóa sale_price
-            $variant->sale_price = null;
-            $variant->end_sale = null;
-            $variant->save();
-        }
+    // Kiểm tra variants hết hạn sale
+    $variants = Variant::whereNotNull('end_sale')
+        ->where('end_sale', '<=', $now)
+        ->get();
+
+    Log::info('Expired variants found:', ['count' => $variants->count()]);
+
+    foreach ($variants as $variant) {
+        $variant->update(['sale_price' => null, 'end_sale' => null]);
+        Log::info('Updated variant:', ['id' => $variant->id]);
     }
+}
+
 }

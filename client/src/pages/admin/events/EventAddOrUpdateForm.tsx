@@ -27,7 +27,6 @@ const EventAddOrUpdateForm = () => {
   const onSubmitEvent = async (dataForm: IEvent) => {
     try {
       const { data } = await instance.post("admin/events", dataForm);
-      console.log(data);
       if (data) {
         toast.success("Tạo sự kiện thành công !");
         dispatch({

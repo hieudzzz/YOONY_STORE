@@ -32,7 +32,6 @@ const onSubmit= async(dataForm:any)=>{
     
     try {
         const {password}=dataForm
-        console.log(password)
         setActive(true);
        await instance.post('auth/password/reset',{
         email:decodedEmail,

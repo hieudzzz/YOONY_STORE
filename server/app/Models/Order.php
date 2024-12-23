@@ -29,7 +29,9 @@ class Order extends Model
         'address',
         'paid_at',
         'completed_at',
-        'code'
+        'code',
+        'is_delivered',
+        'shipped_at'
     ];
 
     const STATUS_ORDER_PENDING = 'pending';
@@ -39,10 +41,18 @@ class Order extends Model
     const STATUS_ORDER_DELIVERED = 'delivered';
     const STATUS_ORDER_CANCELED = 'canceled';
 
+    protected $casts = [
+        'is_delivered' => 'array', 
+    ];
+
 
     public function items() 
     {
         return $this->hasMany(OrderItem::class);
+    }
+    public function rates()
+    {
+        return $this->hasMany(Rate::class);
     }
 
     public function user() 
@@ -50,13 +60,12 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+
     public function coupons()
     {
         return $this->hasMany(OrderCoupon::class);
     }
-  
-     public function rates()
-     {
-         return $this->hasMany(Rate::class);
-     }
+
+     
+
 }

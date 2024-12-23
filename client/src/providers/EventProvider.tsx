@@ -14,8 +14,8 @@ const EventProvider = ({children}:Props) => {
     useEffect(() => {
       (async()=>{
         try {
-            const {data:{data:response}}=await instance.get('admin/events/coupons')
-            console.log(response)
+            await instance.get('admin/events/coupons')
+            // console.log(response)
             // if (response) {
             //     dispatch({
             //         type:"LIST",

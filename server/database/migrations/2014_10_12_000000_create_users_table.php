@@ -20,10 +20,10 @@ return new class extends Migration
             $table->rememberToken();
             $table->string('provider')->nullable();
             $table->string('provider_id')->nullable();
-            $table->string('provider_token',512)->change()->nullable();
+            $table->string('provider_token')->nullable();
             $table->string('avatar')->nullable();
             $table->string('tel')->nullable();
-            $table->string('address')->nullable();
+            $table->foreignId('address_id')->nullable()->constrained('addresses');
             $table->enum('role', ['admin', 'manage'])->nullable()->default(null);
             $table->timestamps();
         });

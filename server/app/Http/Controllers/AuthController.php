@@ -13,7 +13,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
+use App\Mail\VerifyEmail;
 use App\Notifications\ResetPasswordNotification;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -46,22 +50,40 @@ class AuthController extends Controller
         }
     }
 
+
+
     public function register(RegisterRequest $request)
     {
         try {
             $request->validated($request->all());
 
-            $user = User::create([
+            $existingUser = User::where('email', $request->email)->first();
+
+            if ($existingUser) {
+                if (!is_null($existingUser->password)) {
+                    return response()->json([
+                        'message' => 'Email này đã được sử dụng, không thể đăng ký.'
+                    ], 400);
+                }
+            }
+
+            $tokenData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password)
-            ]);
+                'password' => bcrypt($request->password),
+                'expires_at' => now()->addMinutes(10)->timestamp,
+            ];
+
+            $encryptedToken = Crypt::encrypt($tokenData);
+
+            $verificationUrl = route('verify.email', ['token' => $encryptedToken]);
+
+            Mail::to($request->email)->send(new VerifyEmail($verificationUrl));
 
             return response()->json([
-                'message' => 'Đăng ký thành công!',
-                'user' => $user,
-                'token' => $user->createToken('API Token')->plainTextToken
+                'message' => 'Vui lòng kiểm tra email để xác nhận tài khoản.'
             ], 200);
+
         } catch (\Exception $e) {
             Log::error('Có lỗi xảy ra: ' . $e->getMessage());
             return response()->json([
@@ -69,6 +91,83 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function verifyEmail(Request $request)
+{
+    try {
+        // Giải mã token
+        $tokenData = Crypt::decrypt($request->token);
+
+        if ($tokenData['expires_at'] < now()->timestamp) {
+            return redirect('http://localhost:5173/auth/login?message=' . urlencode('Liên kết xác nhận đã hết hạn.'));
+        }
+
+        $existingUser = User::where('email', $tokenData['email'])->first();
+        if ($existingUser && !is_null($existingUser->password)) {
+            return redirect('http://localhost:5173/auth/login?message=' . urlencode('Email đã được xác nhận trước đó.'));
+        }
+
+        $user = User::create([
+            'name' => $tokenData['name'],
+            'email' => $tokenData['email'],
+            'password' => $tokenData['password'],
+        ]);
+
+        return redirect('http://localhost:5173/auth/login?message=' . urlencode('Xác minh email thành công, bạn hãy đăng nhập!'));
+
+    } catch (\Exception $e) {
+        Log::error('Có lỗi xảy ra khi xác minh email: ' . $e->getMessage());
+        return redirect('http://localhost:5173/auth/login?message=' . urlencode('Liên kết xác nhận không hợp lệ hoặc đã hết hạn.'));
+    }
+}
+
+    // public function register(RegisterRequest $request)
+    // {
+    //     try {
+    //         $request->validated($request->all());
+
+    //         $existingUser = User::where('email', $request->email)->first();
+
+    //         if ($existingUser) {
+    //             if (is_null($existingUser->password)) {
+    //                 $existingUser->update([
+    //                     'name' => $request->name,
+    //                     'password' => bcrypt($request->password)
+    //                 ]);
+
+    //                 return response()->json([
+    //                     'message' => 'Đăng ký thành công!',
+    //                     'user' => $existingUser,
+    //                     'token' => $existingUser->createToken('API Token')->plainTextToken
+    //                 ], 200);
+    //             } else {
+    //                 return response()->json([
+    //                     'message' => 'Email này đã được sử dụng, không thể đăng ký.'
+    //                 ], 400);
+    //             }
+    //         }
+
+    //         // Nếu email chưa tồn tại, tạo người dùng mới
+    //         $user = User::create([
+    //             'name' => $request->name,
+    //             'email' => $request->email,
+    //             'password' => bcrypt($request->password)
+    //         ]);
+
+    //         return response()->json([
+    //             'message' => 'Đăng ký thành công!',
+    //             'user' => $user,
+    //             'token' => $user->createToken('API Token')->plainTextToken
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         Log::error('Có lỗi xảy ra: ' . $e->getMessage());
+    //         return response()->json([
+    //             'message' => 'Có lỗi xảy ra trong quá trình đăng ký.'
+    //         ], 500);
+    //     }
+    // }
+
 
     public function logout()
     {
@@ -92,14 +191,13 @@ class AuthController extends Controller
 
             $token = app('auth.password.broker')->createToken($user);
 
-            $user->notify(new ResetPasswordNotification($token,$request->email));
+            $user->notify(new ResetPasswordNotification($token, $request->email));
 
             return response()->json([
                 'message' => 'Link đổi mật khẩu đã được gửi đến email của bạn.',
                 'token' => $token,
                 'email' => $request->email
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
@@ -131,6 +229,92 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // đổi mật khẩu
+
+    public function changePassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'current_password' => 'required',
+                'new_password' => 'required|min:8|',
+            ]);
+
+            $user = $request->user();
+
+            if ($request->current_password === $request->new_password) {
+                return response()->json(['message' => 'Mật khẩu mới không thể trùng với mật khẩu hiện tại'], 400);
+            }
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Mật khẩu hiện cũ tại không chính xác'], 400);
+            }
+
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json(['message' => 'Đổi mật khẩu thành công'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra trong quá trình đổi mật khẩu',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'nullable|string|max:255',
+                'avatar' => 'nullable|string|max:255',
+                'tel' => 'nullable|string|max:20',
+            ]);
+
+            $user = $request->user();
+
+            $user->name = $request->input('name');
+            $user->avatar = $request->input('avatar');
+            $user->tel = $request->input('tel');
+            $user->save();
+
+            return response()->json([
+                'message' => 'Cập nhật thông tin thành công',
+                'user' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra trong quá trình cập nhật thông tin',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            return response()->json([
+                'message' => 'Lấy thông tin người dùng thành công',
+                'user' => [
+                    'name' => $user->name,
+                    'avatar' =>$user->avatar,
+                    'tel' => $user->tel,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi lấy thông tin người dùng',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

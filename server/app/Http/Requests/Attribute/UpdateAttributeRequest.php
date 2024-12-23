@@ -26,7 +26,7 @@ class UpdateAttributeRequest extends FormRequest
     {
         return [
             'name' => 'required|max:255',
-            'slug' => 'nullable|string|max:255|unique:attributes,slug,' . $this->route('attribute'), 
+            'slug' => 'nullable|string|max:255|unique:attributes,slug,' . $this->route('attribute'),
             'type' => 'required',
         ];
     }
@@ -40,7 +40,7 @@ class UpdateAttributeRequest extends FormRequest
             'type.required' => 'Vui lòng chọn',
         ];
 
-        
+
     }
     protected function failedValidation(Validator $validator)
     {

@@ -7,22 +7,32 @@ import {
   MenuItem,
   MenuList,
 } from "@mui/material";
-import { MouseEvent, useContext, useEffect, useMemo, useState } from "react";
+import {
+  MouseEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CartContext from "../../../contexts/CartContext";
 import { Popover } from "antd";
 import ShowMiniCart from "../Show/ShowMiniCart";
-import { useAuth } from "../../../providers/AuthProvider";
-import ChatModal from "./ChatModal";
 import ShowNotificationUser from "../Show/ShowNotificationUser";
-import { Divider } from 'antd';
+import { Divider } from "antd";
+import { NotificationsContext } from "../../../contexts/NotificationsContext";
+import Pusher from "pusher-js";
+import logout from "../Auth/Logout";
+import { IUser } from "../../../interfaces/IUser";
 const NavMenuUser = () => {
   const [chatVisible, setChatVisible] = useState(false); // State cho chat modal
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const { carts } = useContext(CartContext);
-  const { user, logout } = useAuth();
-  const navigate=useNavigate()
+  const { notifications } = useContext(NotificationsContext);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -33,12 +43,63 @@ const NavMenuUser = () => {
   const handleLogout = () => {
     logout();
     handleClose();
-    navigate('/')
+    navigate("/");
   };
   const toggleChat = () => {
-    setChatVisible(!chatVisible); // Chuyển đổi trạng thái của chat modal
+    setChatVisible(!chatVisible);
   };
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userInfor");
+    if (storedUser) setUser(JSON.parse(storedUser));
+    const handleAuthChange = () => {
+      const updatedUser = localStorage.getItem("userInfor");
+      setUser(updatedUser ? JSON.parse(updatedUser) : null);
+    };
+
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => {
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
+  }, []);
+
+  const userData = JSON.parse(localStorage.getItem("userInfor") || "{}");
+
+  const initializePusher = useCallback((userData: IUser) => {
+    if (!userData?.id) return;
+
+    Pusher.logToConsole = true;
+
+    const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
+      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+      encrypted: true,
+    });
+
+    const channel = pusher.subscribe(`user-role-updates.${userData.id}`);
+    channel.bind("user-role-updated", (data: any) => {
+      const updatedUserData = { ...userData, ...data.user };
+      localStorage.setItem("userInfor", JSON.stringify(updatedUserData));
+      setUser(updatedUserData);
+      window.addEventListener("auth-change", updatedUserData);
+    });
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (userData) {
+      const cleanup = initializePusher(userData);
+      return cleanup;
+    }
+  }, [userData, initializePusher]);
+
+  //   if (!authCookie || !userInfo) {
+  //     clearStorage();
+  //   }
+  // }, []);
+  const reatnotifi = notifications.filter(item => item.is_read==0)
   const userButton = useMemo(
     () => (
       <button
@@ -71,7 +132,9 @@ const NavMenuUser = () => {
               src={user?.avatar || "/default-avatar.png"}
               sx={{ width: 24, height: 24 }}
             />
-            <p className="overflow-hidden text-ellipsis whitespace-nowrap">{user?.name}</p>
+            <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+              {user?.name}
+            </p>
           </div>
         )}
       </button>
@@ -102,7 +165,7 @@ const NavMenuUser = () => {
                 className="fill-icon-check-order transition-all"
               ></path>
             </svg>
-            Check Order
+            Tra cứu đơn hàng
           </Link>
         </li>
         <li>
@@ -143,7 +206,7 @@ const NavMenuUser = () => {
           <li>
             <Popover
               placement="bottomRight"
-              title={"Thông báo mói nhận"}
+              title={"Thông báo mới nhận"}
               content={<ShowNotificationUser />}
             >
               <Link
@@ -151,7 +214,7 @@ const NavMenuUser = () => {
                 className="flex gap-2 items-center rounded-md hover:text-util transtition-all"
               >
                 <IconButton>
-                  <Badge badgeContent={1} color="warning">
+                  <Badge badgeContent={reatnotifi.length} color="warning">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -173,28 +236,6 @@ const NavMenuUser = () => {
           </li>
         )}
         <li>
-          <button
-            onClick={toggleChat}
-            className="flex gap-2 items-center py-2 px-4 rounded-full hover:bg-primary hover:text-white transition-all"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="size-6 fill-icon"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"
-              />
-            </svg>
-            Hỗ trợ
-          </button>
-        </li>
-        <li>
           {userButton}
           <Menu
             id="basic-menu"
@@ -202,12 +243,12 @@ const NavMenuUser = () => {
             open={open}
             onClose={handleClose}
             anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
+              vertical: "bottom",
+              horizontal: "right",
             }}
             transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
+              vertical: "top",
+              horizontal: "right",
             }}
             MenuListProps={{
               "aria-labelledby": "btn-account",
@@ -324,7 +365,53 @@ const NavMenuUser = () => {
                     </ListItemText>
                   </MenuItem>
                 </Link>
-                <Divider style={{margin:7}} dashed />
+                {(user.role === "admin" || user.role === "manage") && (
+                  <Link to={"/admin"}>
+                    <MenuItem
+                      onClick={handleClose}
+                      className=" hover:!text-primary transition-all py-2 flex items-center gap-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        className="size-5"
+                        color={"currentColor"}
+                        fill={"none"}
+                      >
+                        <path
+                          d="M14 2H10C6.72077 2 5.08116 2 3.91891 2.81382C3.48891 3.1149 3.1149 3.48891 2.81382 3.91891C2 5.08116 2 6.72077 2 10C2 13.2792 2 14.9188 2.81382 16.0811C3.1149 16.5111 3.48891 16.8851 3.91891 17.1862C5.08116 18 6.72077 18 10 18H14C17.2792 18 18.9188 18 20.0811 17.1862C20.5111 16.8851 20.8851 16.5111 21.1862 16.0811C22 14.9188 22 13.2792 22 10C22 6.72077 22 5.08116 21.1862 3.91891C20.8851 3.48891 20.5111 3.1149 20.0811 2.81382C18.9188 2 17.2792 2 14 2Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M14.5 22L14.1845 21.5811C13.4733 20.6369 13.2969 19.1944 13.7468 18M9.5 22L9.8155 21.5811C10.5267 20.6369 10.7031 19.1944 10.2532 18"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M7 22H17"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M8 14C9.83846 11.4046 14.1188 11.263 16 14M14 8C14 9.10457 13.1046 10 12 10C10.8954 10 10 9.10457 10 8C10 6.89543 10.8954 6 12 6C13.1046 6 14 6.89543 14 8Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <ListItemText
+                        primaryTypographyProps={{ fontSize: 14, padding: 0.5 }}
+                      >
+                        Trang quản trị
+                      </ListItemText>
+                    </MenuItem>
+                  </Link>
+                )}
+                <Divider style={{ margin: 7 }} dashed />
                 <MenuItem className="flex flex-col transition-all gap-2 hover:!text-primary">
                   <div
                     className="flex items-center gap-2 w-full"
@@ -356,8 +443,6 @@ const NavMenuUser = () => {
           </Menu>
         </li>
       </ul>
-      <ChatModal visible={chatVisible} onClose={toggleChat} />{" "}
-      {/* Hiển thị modal chat */}
     </nav>
   );
 };

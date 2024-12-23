@@ -1,18 +1,11 @@
-import { Outlet } from "react-router-dom";
-import RoleProvider from "../../providers/RoleProvider";
-import ModelProvider from "../../providers/ModelProvider";
-import RoleHasModelProvider from "../../providers/RoleHasModelProvider";
+import UserPovider from "../../contexts/UserContext";
+import UserAdmin from "../../pages/admin/users/UserAdmin";
+
 const LayoutUsersAdmin = () => {
   return (
-    <RoleProvider>
-      <ModelProvider>
-        <RoleHasModelProvider>
-          <div>
-            <Outlet />
-          </div>
-        </RoleHasModelProvider>
-      </ModelProvider>
-    </RoleProvider>
+    <UserPovider>
+      <UserAdmin />
+    </UserPovider>
   );
 };
 

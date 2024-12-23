@@ -1,42 +1,44 @@
 <?php
-
 namespace App\Events;
 
+use App\Models\Variant;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class CheckExpiredSalePrices
+class CheckExpiredSalePrices implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-    public function someMethod()
-    {
-        // Gọi sự kiện
-        event(new CheckExpiredSalePrices());
+    public $variant;
 
-        return response()->json(['message' => 'Đã kiểm tra và cập nhật giá khuyến mãi.']);
+    // Constructor để truyền dữ liệu vào sự kiện
+    public function __construct(Variant $variant)
+    {
+        $this->variant = $variant;
     }
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
-    public function broadcastOn(): array
+
+    // Định nghĩa channel sẽ broadcast sự kiện này
+    public function broadcastOn()
+    {
+        return new Channel('sale-expired');
+    }
+
+    // Định nghĩa tên sự kiện
+    public function broadcastAs()
+    {
+        return 'sale.expired.realtime';
+    }
+
+    // Dữ liệu sẽ được gửi cùng sự kiện
+    public function broadcastWith()
     {
         return [
-            new PrivateChannel('channel-name'),
+            'variant_id' => $this->variant->id,
+            'sale_price' => $this->variant->sale_price,
         ];
     }
 }

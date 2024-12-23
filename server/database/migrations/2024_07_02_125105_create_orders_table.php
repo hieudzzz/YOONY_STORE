@@ -25,6 +25,9 @@ return new class extends Migration
             $table->string('address');
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('completed_at')->nullable();
+            $table->timestamp('shipped_at')->nullable();
+            $table->integer('profit')->nullable();
+            $table->json('is_delivered')->nullable();
             $table->timestamps();
         });
     }
@@ -34,6 +37,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropColumn('is_delivered');
+        });
     }
 };

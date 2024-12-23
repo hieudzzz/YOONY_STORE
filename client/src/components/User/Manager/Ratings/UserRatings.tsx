@@ -5,24 +5,31 @@ import UserRatingsDone from "./UserRatingsDone";
 import { useEffect, useState } from "react";
 import { IOrderUserClient } from "../../../../interfaces/IOrderUserClient";
 import instance from "../../../../instance/instance";
+import { IMeta } from "../../../../interfaces/IMeta";
+import { useSearchParams } from "react-router-dom";
 
 const UserRatings = () => {
   const [listRatingsPending, setListRatingsPending] = useState<IOrderUserClient[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page") || "1");
+  const [meta, setMeta] = useState<IMeta>();
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await instance.get("orders/pending-reviews");
-        setListRatingsPending(data);
+        setSearchParams({ page: String(page) });
+        const {data} = await instance.get(`orders/pending-reviews?page=${page}`);
+        setListRatingsPending(data.data);
+        setMeta(data?.pagination);
       } catch (error) {
         console.log(error);
       }
     })();
-  }, []);
+  }, [page]);
   const items: TabsProps["items"] = [
     {
       key: "1",
       label: <p>Chưa đánh giá <span className="bg-primary py-0.5 px-1.5 text-xs text-util rounded-full">{listRatingsPending.length}</span></p>,
-      children: <UserRatingsPending listRatingsPending={listRatingsPending} />,
+      children: <UserRatingsPending listRatingsPending={listRatingsPending} meta={meta} setSearchParams={setSearchParams} page={page} />,
     },
     {
       key: "2",

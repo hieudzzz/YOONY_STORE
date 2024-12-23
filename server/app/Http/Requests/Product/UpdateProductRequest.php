@@ -29,13 +29,15 @@ class UpdateProductRequest extends FormRequest
             'images' => 'required|array',
             'category_id' => 'required|exists:categories,id',
             'is_featured' => 'boolean',
-            'is_good_deal' => 'boolean',
             'is_active' => 'boolean',
             'variants' => 'required|array',
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.sale_price' => 'nullable|numeric|min:0',
             'variants.*.image' => 'nullable|string',
             'variants.*.attribute_value_ids' => 'nullable|array',
+            'variants.*.end_sale' => ['nullable', 'date', 'after_or_equal:tomorrow'],
+            'variants.*.attribute_values.*' => 'integer|exists:attribute_values,id',
+
         ];
     }
 

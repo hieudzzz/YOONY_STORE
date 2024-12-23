@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Events\CheckExpiredSalePrices;
+use App\Events\OrderCanceled;
 use App\Events\OrderShipped;
 use App\Listeners\CheckExpiredSalePricesListener;
 use App\Listeners\DeleteCart;
 use App\Listeners\InsertOrderItems;
+use App\Listeners\SendCancel;
 use App\Listeners\SendNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -29,10 +31,14 @@ class EventServiceProvider extends ServiceProvider
                 DeleteCart::class,
                 InsertOrderItems::class
         ],
-        CheckExpiredSalePrices::class => [
-            CheckExpiredSalePricesListener::class,
-    ],
+        \App\Events\CheckExpiredSalePrices::class => [
+            \App\Listeners\HandleExpiredSales::class,
+        ],
+        OrderCanceled::class => [
+            SendCancel::class
+        ]
     ];
+   
 
     /**
      * Register any events for your application.
@@ -49,4 +55,7 @@ class EventServiceProvider extends ServiceProvider
     {
         return false;
     }
+
+
+
 }

@@ -73,7 +73,7 @@ const Footer = () => {
               />
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 col-span-2">
             <h3 className={'font-medium'}>MẠNG XÃ HỘI</h3>
             <div className="flex gap-3 items-center">
               <svg
@@ -119,5 +119,4 @@ const Footer = () => {
     </footer>
   );
 };
-
-export default Footer;
+export default Footer; 

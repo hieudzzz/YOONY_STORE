@@ -14,8 +14,11 @@ interface FormData {
   phone: string;
   provinceId: number | null;
   districtId: number | null;
-  wardId: null;
-  address: string;
+  wardId: number | null;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+  addressDetail: string;
 }
 
 interface FormErrors {
@@ -24,7 +27,7 @@ interface FormErrors {
   provinceId?: string;
   districtId?: string;
   wardId?: string;
-  address?: string;
+  addressDetail?: string;
 }
 
 const STORAGE_KEY = "addressOrderFormData";
@@ -43,7 +46,10 @@ const AddressOrder = forwardRef((props, ref) => {
           provinceId: null,
           districtId: null,
           wardId: null,
-          address: "",
+          province:null,
+          district:null,
+          ward:null,
+          addressDetail: "",
         };
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -143,7 +149,7 @@ const AddressOrder = forwardRef((props, ref) => {
         return value ? undefined : "Vui lòng chọn Quận/Huyện";
       case "wardId":
         return value ? undefined : "Vui lòng chọn Phường/Xã";
-      case "address":
+      case "addressDetail":
         return value && (value as string).length >= 10
           ? undefined
           : "Địa chỉ phải có ít nhất 10 ký tự";
@@ -158,12 +164,15 @@ const AddressOrder = forwardRef((props, ref) => {
     setErrors((prev) => ({ ...prev, [id]: validateField(id, value) }));
   };
 
-  const handleProvinceChange = (value: number) => {
+  const handleProvinceChange = (value: number, option: any) => {
     setFormData((prev) => ({
       ...prev,
       provinceId: value,
+      province: option.label,
       districtId: null,
+      district: null,
       wardId: null,
+      ward: null,
     }));
     setErrors((prev) => ({
       ...prev,
@@ -175,8 +184,14 @@ const AddressOrder = forwardRef((props, ref) => {
     setWards([]);
   };
 
-  const handleDistrictChange = (value: number) => {
-    setFormData((prev) => ({ ...prev, districtId: value, wardId: null }));
+  const handleDistrictChange = (value: number, option: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      districtId: value,
+      district: option.label,
+      wardId: null,
+      ward: null,
+    }));
     setErrors((prev) => ({
       ...prev,
       districtId: validateField("districtId", value),
@@ -185,10 +200,18 @@ const AddressOrder = forwardRef((props, ref) => {
     getWards(value);
   };
 
-  const handleWardChange = (value: number) => {
-    setFormData((prev) => ({ ...prev, wardId: value }));
-    setErrors((prev) => ({ ...prev, wardId: validateField("wardId", value) }));
+  const handleWardChange = (value: number, option: any) => {
+    setFormData((prev: FormData) => ({
+      ...prev,
+      wardId: value,
+      ward: option.label as string,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      wardId: validateField("wardId", value),
+    }));
   };
+
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -201,7 +224,6 @@ const AddressOrder = forwardRef((props, ref) => {
     });
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
-      // Xử lý gửi form ở đây
       console.log("Form is valid. Submitting...", formData);
     } else {
       console.log("Form has errors. Please correct them.");
@@ -336,20 +358,20 @@ const AddressOrder = forwardRef((props, ref) => {
         </div>
         <div>
           <div className="mb-2 block">
-            <Label htmlFor="address" value="Địa chỉ chi tiết" />
+            <Label htmlFor="addressDetail" value="Địa chỉ chi tiết" />
           </div>
           <input
             type="text"
             placeholder="Địa chỉ chi tiết"
-            id="address"
-            value={formData.address}
+            id="addressDetail"
+            value={formData?.addressDetail}
             onChange={handleInputChange}
             className={`block focus:!border-primary/50 h-[35px] text-sm placeholder-[#00000040] border-input rounded-[5px] w-full focus:!shadow-none ${
-              errors.address ? "border-primary/75" : ""
+              errors.addressDetail ? "border-primary/75" : ""
             }`}
           />
-          {errors.address && (
-            <p className="text-primary text-sm mt-1">{errors.address}</p>
+          {errors.addressDetail && (
+            <p className="text-primary text-sm mt-1">{errors.addressDetail}</p>
           )}
         </div>
       </form>

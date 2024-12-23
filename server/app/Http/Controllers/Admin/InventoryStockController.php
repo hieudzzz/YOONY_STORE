@@ -10,8 +10,9 @@ class InventoryStockController extends Controller
 {
     public function index()
     {
-        $stocks = InventoryStock::orderByDesc('id')->paginate(10);
-        
+        $stocks = InventoryStock::with(['variant.product.category'])
+        ->orderByDesc('id')
+        ->paginate(10);
         return response()->json([
             'message' => 'Danh sách tồn kho',
             'data' => $stocks

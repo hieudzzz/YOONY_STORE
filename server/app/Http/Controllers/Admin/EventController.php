@@ -35,7 +35,8 @@ class EventController extends Controller
 
     // Thêm mới một vòng quay
     public function createEvent(Request $request)
-    {
+{
+    try {
         // Xác thực dữ liệu đầu vào
         $request->validate([
             'name' => 'required|string|max:255',
@@ -66,7 +67,6 @@ class EventController extends Controller
         // Tính tổng xác suất thắng
         $totalWinningProbability = $event->coupons->sum('winning_probability');
 
-        // Chuẩn bị dữ liệu để trả về
         $couponsData = $event->coupons->map(function ($coupon) use ($totalWinningProbability) {
             // Tính tỷ lệ phần trăm
             $probabilityPercentage = ($totalWinningProbability > 0) ? ($coupon->winning_probability / $totalWinningProbability) * 100 : 0;
@@ -83,7 +83,7 @@ class EventController extends Controller
                 'max_order_value' => $coupon->max_order_value,
                 'status' => $coupon->status,
                 'winning_probability' => $coupon->winning_probability,
-                'probability_percentage' => round($probabilityPercentage, 2), // Tính tỷ lệ phần trăm
+                'probability_percentage' => round($probabilityPercentage, 2),
                 'created_at' => $coupon->created_at,
                 'updated_at' => $coupon->updated_at,
                 'pivot' => [
@@ -104,10 +104,19 @@ class EventController extends Controller
                 'is_active' => $event->is_active,
                 'created_at' => $event->created_at,
                 'updated_at' => $event->updated_at,
-                'coupons' => $couponsData, // Trả về dữ liệu coupon
+                'coupons' => $couponsData,
             ]
         ], 201);
+
+    } catch (\Exception $e) {
+        // Bắt lỗi nếu có ngoại lệ xảy ra
+        return response()->json([
+            'message' => 'Đã xảy ra lỗi khi tạo sự kiện.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
 
     public function showEvent($id)
@@ -123,53 +132,66 @@ class EventController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'is_active' => 'required|boolean', // Thêm xác thực cho trường is_active
-            'coupons' => 'array', // Mảng ID coupon
-            'coupons.*' => 'exists:coupons,id', // Kiểm tra từng ID coupon
-            'winning_probabilities' => 'array', // Mảng xác suất trúng thưởng
-            'winning_probabilities.*' => 'numeric|min:0|max:100', // Kiểm tra xác suất trúng thưởng
-        ]);
+        try {
+            // Xác thực dữ liệu đầu vào
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'is_active' => 'required|boolean', // Thêm xác thực cho trường is_active
+                'coupons' => 'array', // Mảng ID coupon
+                'coupons.*' => 'exists:coupons,id', // Kiểm tra từng ID coupon
+                'winning_probabilities' => 'array', // Mảng xác suất trúng thưởng
+                'winning_probabilities.*' => 'numeric|min:0|max:100', // Kiểm tra xác suất trúng thưởng
+            ]);
 
-        // Tìm sự kiện cần cập nhật
-        $event = Event::findOrFail($id);
+            // Tìm sự kiện cần cập nhật
+            $event = Event::findOrFail($id);
 
-        // Cập nhật thông tin sự kiện
-        $event->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'is_active' => $request->is_active,
-        ]);
+            // Cập nhật thông tin sự kiện
+            $event->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'is_active' => $request->is_active,
+            ]);
 
-        // Gán lại coupon cho sự kiện (nếu có)
-        if ($request->has('coupons')) {
-            // Detach all existing coupons
-            $event->coupons()->detach();
-            // Attach new coupons
-            $event->coupons()->attach($request->coupons);
-        }
+            // Gán lại coupon cho sự kiện (nếu có)
+            if ($request->has('coupons')) {
+                // Detach all existing coupons
+                $event->coupons()->detach();
+                // Attach new coupons
+                $event->coupons()->attach($request->coupons);
+            }
 
-        // Cập nhật winning_probability cho các coupon trong bảng coupons
-        if ($request->has('winning_probabilities')) {
-            foreach ($request->coupons as $index => $couponId) {
-                if (isset($request->winning_probabilities[$index])) {
-                    // Cập nhật trực tiếp trên bảng coupons
-                    Coupon::where('id', $couponId)->update([
-                        'winning_probability' => $request->winning_probabilities[$index],
-                    ]);
+            // Cập nhật winning_probability cho các coupon trong bảng coupons
+            if ($request->has('winning_probabilities')) {
+                foreach ($request->coupons as $index => $couponId) {
+                    if (isset($request->winning_probabilities[$index])) {
+                        // Cập nhật trực tiếp trên bảng coupons
+                        Coupon::where('id', $couponId)->update([
+                            'winning_probability' => $request->winning_probabilities[$index],
+                        ]);
+                    }
                 }
             }
-        }
-        $eventWithCoupons = Event::with('coupons')->findOrFail($id);
 
-        return new EventResource($eventWithCoupons);
+            // Lấy sự kiện và coupon sau khi cập nhật
+            $eventWithCoupons = Event::with('coupons')->findOrFail($id);
+
+            return new EventResource($eventWithCoupons);
+
+        } catch (\Exception $e) {
+            // Bắt lỗi nếu có ngoại lệ xảy ra
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi khi cập nhật sự kiện.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     public function destroy(string $id)
     {

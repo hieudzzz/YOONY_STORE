@@ -1,7 +1,7 @@
 const GroupVariantsByColor = (variants: any) => {
   const colorGroups = variants.reduce((groups: any, variant: any) => {
     const colorAttr = variant.attribute_values.find(
-      (attr: any) => attr.attribute.slug === "color"
+      (attr: any) => attr.attribute?.slug === "color"
     );
     const color = colorAttr ? colorAttr.value : "Unknown";
 

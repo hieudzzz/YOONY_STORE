@@ -24,7 +24,7 @@ const LoginGoogleFaceBook = () => {
 };
   return (
     <div className="flex items-center justify-center gap-3">
-      <button
+      {/* <button
         type="button"
         onClick={handleLoginFacebook}
         className="flex items-center gap-2 py-2 px-3 rounded-full border border-[#f1f1f1]"
@@ -41,7 +41,7 @@ const LoginGoogleFaceBook = () => {
           />
         </svg>
         Facebook
-      </button>
+      </button> */}
       <button
         type="button"
         onClick={handleLoginGoogle}
@@ -53,7 +53,7 @@ const LoginGoogleFaceBook = () => {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <g clip-path="url(#clip0_247_676)">
+          <g clipPath="url(#clip0_247_676)">
             <path
               d="M23.9873 12.2245C23.9873 11.2413 23.9057 10.5238 23.729 9.77966H12.239V14.2176H18.9833C18.8474 15.3205 18.1132 16.9815 16.4814 18.0976L16.4585 18.2462L20.0915 20.9964L20.3431 21.0209C22.6547 18.9347 23.9873 15.8653 23.9873 12.2245Z"
               fill="#4285F4"

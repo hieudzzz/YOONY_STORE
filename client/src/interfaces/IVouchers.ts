@@ -10,10 +10,10 @@ export interface IVoucher{
     discount:number,
     discount_type:VoucherType,
     usage_limit: number,
-    min_order_value: number,
-    max_order_value: number,
+    min_order_value: number | null,
+    max_order_value: number | null,
     start_date: string,
     end_date: string,
     status:boolean,
-    is_featured:boolean
+    max_discount:number | null
 }
